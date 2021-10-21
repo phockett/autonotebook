@@ -284,7 +284,7 @@ class autoProc():
                             self.itempaths = self.paths.copy()   # Set copy to reuse master dict.
                             if self.options['subdirs'] and self.options['outputSub']:
 
-                                self.itempaths['subdir'] = self.paths['watchDir'].relative_to(Path(item).parent))
+                                self.itempaths['subdir'] = self.paths['watchDir'].relative_to(Path(item).parent)
                                 # self.paths['outDir'] = self.paths['outDir']/subdir   # Build same dir tree for outDir - CAN'T RETURN TO MASTER OR WILL TREE
                                 self.itempaths['outDir'] = self.paths['outDir']/subdir
                                 self.itempaths['htmlDir'] = self.paths['htmlDir']/subdir
