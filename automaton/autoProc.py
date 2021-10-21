@@ -68,7 +68,7 @@ class autoProc():
                 self.options['fileType'] = [self.options['fileType']]  # Wrap single item to list
 
         # Fix int type, ugh. Must be a neater way to do this for dotenv lib, only pulls to str type?
-        [self.options.update({k:int(self.options[k])}) for k in ['verbose', 'pollRate', 'subdirs']]
+        [self.options.update({k:int(self.options[k])}) for k in ['verbose', 'pollRate', 'subdirs','usesub']]
 
         self.verbose = self.options['verbose']
 
@@ -278,7 +278,18 @@ class autoProc():
 
                             # As python process, https://docs.python.org/3/library/multiprocessing.html
                             # p = Process(target=triggerNotebook, args=[item], kwargs = {'nbDir': self.paths['nbDir'], 'nbTemplate': self.options['nbTemplate']})
-                            p = Process(target=triggerNotebook, args=[item], kwargs = self.paths)
+
+                            # If specified, output to relative subdir
+                            # CHECK OLD CODE FOR THIS - want relative subdir only for case when watchDir != outDir?
+                            self.itempaths = self.paths.copy()   # Set copy to reuse master dict.
+                            if self.options['subdirs'] and self.options['outputSub']:
+
+                                self.itempaths['subdir'] = self.paths['watchDir'].relative_to(Path(item).parent))
+                                # self.paths['outDir'] = self.paths['outDir']/subdir   # Build same dir tree for outDir - CAN'T RETURN TO MASTER OR WILL TREE
+                                self.itempaths['outDir'] = self.paths['outDir']/subdir
+                                self.itempaths['htmlDir'] = self.paths['htmlDir']/subdir
+
+                            p = Process(target=triggerNotebook, args=[item], kwargs = self.itempaths)
                             p.start()
 
 
@@ -291,7 +302,7 @@ class autoProc():
                             if self.slack_client_wrapper:
                                 # Do some slack posting here!
                                 now = self.getTimes()
-                                self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f'Found new datafile {item}, processing... \n({now}))')  #\n\n (Images & URL go here!)')
+                                self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f'Found new datafile {Path(item).name}, processing... \n({now}))')  #\n\n (Images & URL go here!)')
 
 
                     if k == 'added' and fType == 'html':
@@ -301,7 +312,7 @@ class autoProc():
                             if self.slack_client_wrapper:
                                 # Do some slack posting here!
                                 now = self.getTimes()
-                                self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f'Processed {item}. Images & URL go here!)')
+                                self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f'Processed {Path(item).name}. Images & URL go here!)')
 
             # Actions for removed files
             k == 'removed'

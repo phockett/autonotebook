@@ -16,10 +16,14 @@ htmlDir=
 
 #****** Additional options
 # NEEDS WORK - these will all be imported as STRINGS. Ugh.
+# UPDATE: now parased to int for specified types, also ugly.
 nbTemplate=autoTestNB.ipynb
 verbose=1
 pollRate=5
-subdirs=True
+subdirs=1
+
+# Output results back to subdirs?
+outputSub=1
 
 # FileType(s) - single item or python list are OK.
 fileType=['h5','html']
