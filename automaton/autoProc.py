@@ -286,8 +286,8 @@ class autoProc():
 
                                 self.itempaths['subdir'] = self.paths['watchDir'].relative_to(Path(item).parent)
                                 # self.paths['outDir'] = self.paths['outDir']/subdir   # Build same dir tree for outDir - CAN'T RETURN TO MASTER OR WILL TREE
-                                self.itempaths['outDir'] = self.paths['outDir']/subdir
-                                self.itempaths['htmlDir'] = self.paths['htmlDir']/subdir
+                                self.itempaths['outDir'] = self.paths['outDir']/self.itempaths['subdir']
+                                self.itempaths['htmlDir'] = self.paths['htmlDir']/self.itempaths['subdir']
 
                             p = Process(target=triggerNotebook, args=[item], kwargs = self.itempaths)
                             p.start()
