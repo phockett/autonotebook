@@ -14,10 +14,12 @@ import time
 
 from pathlib import Path
 
+#************* Paths
+
 # Set paths
 def setPaths(verbose = True):
     """
-    Set paths from current file/context.
+    Get paths from current file/context.
 
     """
 
@@ -30,6 +32,82 @@ def setPaths(verbose = True):
         print(f"Working dir {paths['currDir']} \nrepo dir {paths['repoDir']} \nscript dir {paths['scpDir']}")
 
     return paths
+
+def setPathsFile(dirType = 'rel', fileIn = 'settings', fType = 'settings', verbose = True):
+    """
+    Set paths from settings or path file.
+
+    Parameters
+    ----------
+    dirType : str, optional, default = 'abs'
+        Set for 'rel' or 'abs' paths.
+        If rel, the current working dir is assumed to be the base path.
+
+    fileIn : str or path, optional, default = 'settings'
+        Settings file to read. Assumed to be in the working dir if no path specified.
+
+    fType : str, optional, default = 'settings'
+        If 'settings' use only values *Dir for paths.
+        Otherwise assuem ALL values are paths.
+
+    verbose : bool, optional, default = True
+        Print output
+
+    Returns
+    -------
+    paths dictionary
+
+
+    """
+
+    paths = setPaths()  # Get defaults
+
+    # Read settings file
+#     if dirType == 'rel':
+#         fileInd = Path(fileIn
+#     if not Path(fileIn).is_file():
+
+    if fType == 'settings':
+        paths.update({k:v for k,v in dotenv.dotenv_values(dotenv_path = fileIn).items() if k.endswith('Dir')}) # For shared options file
+    else:
+        paths.update(dotenv.dotenv_values(dotenv_path = 'automaton_paths'))  # For dedicated file
+
+
+    # Set defaults for missing paths & output to dict
+    if not paths['nbDir']:
+        paths['nbDir'] = paths['repoDir']/'nbTemplates'
+
+    if not paths['watchDir']:
+        paths['watchDir'] = paths['currDir']
+
+#     {paths[k]:paths['watchDir'] for k in paths.keys() if not paths[k]}
+    [paths.update({k:paths['watchDir']}) for k in paths.keys() if not paths[k]]
+    [paths.update({k:Path(paths[k]).expanduser()}) for k in paths.keys() if not isinstance(paths[k],Path)]  # Wrap with Path()
+
+
+    # Check paths
+    for k,v in paths.items():
+
+        if not v.is_dir():
+#             print(f"***WARNING: path {k}: {v} not found.")
+
+            if v.name in paths.keys():
+                paths[k] = paths[v.name]
+
+            # Set abs if not specified
+            if dirType == 'rel':
+                paths[k] = paths['currDir']/paths[k]
+
+            # Test again
+            if not paths[k].is_dir(): print(f"***WARNING: path {k}: {paths[k]} not found.")
+
+    if verbose:
+        print(f"\n*** Got paths from file {fileIn}.")
+        [print(k,':\t', v) for k,v in paths.items()]
+
+    return paths
+
+#****************** Polling
 
 # Basic dir scan
 def getFileList(scanDir = None, fileType = 'h5', verbose = True):
@@ -105,6 +183,8 @@ def pollDir(dir = None, pollRate = 5, verbose = True):
       if removed and verbose: print("Removed: ", ", ".join (removed))
       before = after
 
+
+#***************** Runner
 
 def triggerNotebook(dataFile, outDir = None, nbOut = None, nbDir = None, nbTemplate = None, htmlDir = None, **kwargs):
     """
