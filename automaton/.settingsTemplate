@@ -18,6 +18,7 @@ htmlDir=
 nbTemplate=autoTestNB.ipynb
 verbose=1
 pollRate=5
+subdirs=True
 
 # FileType(s) - single item or python list are OK.
 fileType=['h5','html']

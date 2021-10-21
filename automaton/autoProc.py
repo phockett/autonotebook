@@ -56,6 +56,10 @@ class autoProc():
         # Get options from file
         self.options = dotenv.dotenv_values(dotenv_path = settingsFile)
 
+        # Check options loaded... dotenv returns empty dict if file not found.
+        if not self.options:
+            print(f"***FAILED to load settings file {settingsFile}.")
+
         # Ensure fileType list is set correctly
         if isinstance(self.options['fileType'], str):
             if self.options['fileType'].startswith('['):
@@ -190,7 +194,7 @@ class autoProc():
         fileDict = {}
 
         for fileType in self.options['fileType']:
-            fileDict[fileType] = glob.glob((testClass.paths['watchDir']/'**'/f'*.{fileType}').as_posix(), recursive = self.options['subdirs'])  # ** and recursive = True for subdirs
+            fileDict[fileType] = glob.glob((self.paths['watchDir']/'**'/f'*.{fileType}').as_posix(), recursive = self.options['subdirs'])  # ** and recursive = True for subdirs
 
         return fileDict
 
