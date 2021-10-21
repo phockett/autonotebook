@@ -100,9 +100,26 @@ class autoProc():
         except:
             self.slack_client_wrapper = False
 
+    # def getFileList(self):
+    #     """Get file list from dir & return as dict (as per demo pollDir code)."""
+    #     return dict([(f, None) for f in os.listdir(self.paths['watchDir']) if f.endswith(self.options['fileType'])])
+
     def getFileList(self):
-        """Get file list from dir & return as dict (as per demo pollDir code)."""
-        return dict([(f, None) for f in os.listdir(self.paths['watchDir']) if f.endswith(self.options['fileType'])])
+        """
+        Get file list from dir & return as dict.
+
+        Checks multiple fileTypes and returns as fileDict['fileType'] = fileList
+        Will also check subdirs if self.options['subdirs'] = True (default).
+
+        """
+
+        fileDict = {}
+
+        for fileType in self.options['fileType']:
+            fileDict[fileType] = glob.glob((testClass.paths['watchDir']/'**'/f'*.{fileType}').as_posix(), recursive = self.options['subdirs'])  # ** and recursive = True for subdirs
+
+        return fileDict
+
 
     def getTimes(self, timezones = ['Asia/Tokyo','Europe/London','US/Eastern','US/Pacific'], timeFormat = '%Y-%m-%d %H:%M:%S'):
         """Get times in various zones."""
