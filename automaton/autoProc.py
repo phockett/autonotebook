@@ -27,8 +27,8 @@ try:
     sys.path.append(modDir.as_posix())
     # print(sys.path)
     from analysis_bot.analysis_bot import slack_client_wrapper
-except ImportError as e:
-    print(f"*** Slack routines not available. ImportError: {e}")
+except Exception as e:
+    print(f"*** Slack routines not available. Error: {e}")
 
 
 class autoProc():
@@ -68,7 +68,7 @@ class autoProc():
                 self.options['fileType'] = [self.options['fileType']]  # Wrap single item to list
 
         # Fix int type, ugh. Must be a neater way to do this for dotenv lib, only pulls to str type?
-        [self.options.update({k:int(self.options[k])}) for k in ['verbose', 'pollRate']]
+        [self.options.update({k:int(self.options[k])}) for k in ['verbose', 'pollRate', 'subdirs']]
 
         self.verbose = self.options['verbose']
 
@@ -84,8 +84,17 @@ class autoProc():
         try:
             self.slack_client_wrapper = slack_client_wrapper()
             self.channel_ID = self.options['channel_ID']
-        except:
+
+            if self.verbose:
+                print(f"Slack client OK, channel_ID: {self.channel_ID}")
+
+        except Exception as e:
             self.slack_client_wrapper = False
+            print(f"Slack client failed: {e}")
+
+            # if self.verbose:
+            #     print(f"Couldn't load Slack client")
+
 
 
 
