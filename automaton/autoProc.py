@@ -67,8 +67,12 @@ class autoProc():
             else:
                 self.options['fileType'] = [self.options['fileType']]  # Wrap single item to list
 
+        # Fix int type, ugh. Must be a neater way to do this for dotenv lib, only pulls to str type?
+        [self.options[k] = int(self.options[k]) for k in ['verbose', 'pollRate']]
 
         self.verbose = self.options['verbose']
+
+        # Set paths
         self.paths = setPathsFile(pathType = self.options['pathType'], fileIn = settingsFile, fType = 'settings', verbose = self.verbose)
 
         # Check current file list
@@ -235,7 +239,7 @@ class autoProc():
         before = self.getFileList()
 
         while 1:
-            time.sleep (self.options['pollRate'])
+            time.sleep(self.options['pollRate'])
             after = self.getFileList()
         #             added = [f for f in after if not f in before]
         #             removed = [f for f in before if not f in after]
