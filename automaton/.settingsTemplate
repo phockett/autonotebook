@@ -1,12 +1,11 @@
 #****** Set paths for notebook automation routines.
 # Blank paths will be set to repo or working dir at run time.
 # Path refs by name are also supported, e.g. outDir=watchDir
-
+# Home dir ~ also OK.
 
 # Minimal settings - watchDir
 pathType=abs
 watchDir=
-
 
 # Optional dirs
 nbDir=
@@ -18,8 +17,10 @@ htmlDir=
 #****** Additional options
 nbTemplate=autoTestNB.ipynb
 verbose=1
-fileType=['h5','html']
 pollRate=5
+
+# FileType(s) - single item or python list are OK.
+fileType=['h5','html']
 
 
 # Slack posting options

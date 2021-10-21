@@ -2,6 +2,7 @@ import os
 import sys
 import inspect
 import subprocess
+import ast
 
 import time
 from datetime import datetime
@@ -51,7 +52,17 @@ class autoProc():
     def __init__(self, settingsFile = '.settings'):
         """Init autoProc class using settings file."""
 
+        # Get options from file
         self.options = dotenv.dotenv_values(dotenv_path = settingsFile)
+
+        # Ensure fileType list is set correctly
+        if isinstance(self.options['fileType'], str):
+            if self.options['fileType'].startswith('['):
+                self.options['fileType'] = ast.literal_eval(self.options['fileType'])  # Convert string list to list type
+            else:
+                self.options['fileType'] = [self.options['fileType']]  # Wrap single item to list
+
+
         self.verbose = self.options['verbose']
         self.paths = setPathsFile(pathType = self.options['pathType'], fileIn = settingsFile, fType = 'settings', verbose = self.verbose)
 
