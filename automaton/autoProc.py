@@ -104,6 +104,33 @@ class autoProc():
     #     """Get file list from dir & return as dict (as per demo pollDir code)."""
     #     return dict([(f, None) for f in os.listdir(self.paths['watchDir']) if f.endswith(self.options['fileType'])])
 
+    def compareFileDicts(self, dict1, dict2):
+        """Compare two file dictionaries for differences"""
+
+        fileDiffs = {}
+        fileDiffs['added'] = {}
+        fileDiffs['removed'] = {}
+
+        for fileType in self.options['fileType']:
+
+            removed = set(dict1[fileType]) - set(dict2[fileType])  # Files missing in dict2 (=="removed")
+            added = set(dict2[fileType]) - set(dict1[fileType])  # Files missing in dict1 (=="added")
+
+            for k in fileDiffs.keys():
+                if locals()[k]:
+                    fileDiffs[k][fileType] = locals()[k]
+
+                    if self.verbose:  print(f"{k}: {locals()[k]}")
+
+#             if fileDiffs[fileType]['removed']:
+#                 print(f"Removed: {fileDiffs[fileType]['removed']}")
+
+#             if fileDiffs[fileType]['added']:
+#                 print(f"Added: {fileDiffs[fileType]['added']}")
+
+        return fileDiffs
+
+
     def getFileList(self):
         """
         Get file list from dir & return as dict.
@@ -133,7 +160,7 @@ class autoProc():
     # def poll(self):
     #     self.pollDir(dir = self.paths['watchDir'], pollRate = self.options['pollRate'], verbose = self.verbose)
 
-    # Adapted polling code
+   # Adapted polling code
     def pollDir(self):
         """
         Basic dir polling.
@@ -155,39 +182,61 @@ class autoProc():
         while 1:
             time.sleep (self.options['pollRate'])
             after = self.getFileList()
-            added = [f for f in after if not f in before]
-            removed = [f for f in before if not f in after]
+        #             added = [f for f in after if not f in before]
+        #             removed = [f for f in before if not f in after]
 
-            if added:
-              if self.verbose:
-                  print("Added: ", ", ".join (added))
+            fileDiffs = self.compareFileDicts(before, after)
 
-              # Spawn trigger per new item
-              for item in added:
-                  # triggerNotebook(item, nbDir = self.paths['nbDir'], nbTemplate = self.options['nbTemplate'])  # Direct notebook build call
+        #             for k in fileDiffs.keys():
+            # Actions for new files
+            k = 'added'
+            if fileDiffs[k]:
+                
+                # Execute specific actions for different file types.
+                for fType in fileDiffs[k]:
+                    if k == 'added' and fType == 'h5':
+                        # Spawn notebook(s)
+                        for item in fileDiffs[k][fType]:
+                            # triggerNotebook(item, nbDir = self.paths['nbDir'], nbTemplate = self.options['nbTemplate'])  # Direct notebook build call
 
-                  # Subproc call
-                  # cmd = f"auto_util({item}, nbDir = {self.paths['nbDir']}, nbTemplate = {self.options['nbTemplate']})"
-                  # subprocess.run(cmd)
+                            # Subproc call
+                            # cmd = f"auto_util({item}, nbDir = {self.paths['nbDir']}, nbTemplate = {self.options['nbTemplate']})"
+                            # subprocess.run(cmd)
 
-                  # As python process, https://docs.python.org/3/library/multiprocessing.html
-                  # p = Process(target=triggerNotebook, args=[item], kwargs = {'nbDir': self.paths['nbDir'], 'nbTemplate': self.options['nbTemplate']})
-                  p = Process(target=triggerNotebook, args=[item], kwargs = self.paths)
-                  p.start()
-
-                  if self.verbose:
-                      print(f"Triggered build for {item}")
-                  # print(type(item))
-
-                  # Optional import, set to False if missing.
-                  if self.slack_client_wrapper:
-                      # Do some slack posting here!
-                      now = self.getTimes()
-                      self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f'Found new datafile {item}. ({now})\n\n (Images & URL go here!)')
+                            # As python process, https://docs.python.org/3/library/multiprocessing.html
+                            # p = Process(target=triggerNotebook, args=[item], kwargs = {'nbDir': self.paths['nbDir'], 'nbTemplate': self.options['nbTemplate']})
+                            p = Process(target=triggerNotebook, args=[item], kwargs = self.paths)
+                            p.start()
 
 
-            if removed and self.verbose: print("Removed: ", ", ".join (removed))
+                            if self.verbose:
+                                print(f"Triggered build for {item}")
+                                # print(type(item))
+
+                            # Optional import, set to False if missing.
+                            if self.slack_client_wrapper:
+                                # Do some slack posting here!
+                                now = self.getTimes()
+                                self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f'Found new datafile {item}, processing... \n({now}))')  #\n\n (Images & URL go here!)')
+
+
+
+                    if k == 'added' and fType == 'html':
+                        # Upload HTML file(s)
+                        for item in fileDiffs[k][fType]:
+                            # Optional import, set to False if missing.
+                            if self.slack_client_wrapper:
+                                # Do some slack posting here!
+                                now = self.getTimes()
+                                self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f'Processed {item}. Images & URL go here!)')
+
+
+                    if k == 'removed' and self.verbose:
+                        print(f"Files removed: {fileDiffs[k][fType]}")
+
+
             before = after
+
 
 
 if __name__ == '__main__':
