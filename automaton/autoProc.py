@@ -48,7 +48,7 @@ class autoProc():
     def __init__(self, watchDir = None, pollRate = 5,
                 nbDir = None, nbTemplate = None,
                 outDir = None, htmlDir = None,
-                fileType = 'h5', channel_ID = 'C02HP5X1F2S',
+                fileType = ['h5','html'], channel_ID = 'C02HP5X1F2S',
                 verbose = True):
 
         # Set paths - repo defaults
@@ -81,6 +81,13 @@ class autoProc():
         # Additional options
         self.options = {}
         self.options['pollRate'] = pollRate
+
+        if fileType is None:
+            fileType = ['*']
+
+        if not isinstance(fileType, list):   # Force to list for glob routine
+            fileType = [fileType]
+
         self.options['fileType'] = fileType
 
         if nbTemplate is None:
@@ -152,8 +159,12 @@ class autoProc():
         """Get times in various zones."""
 
         utcNow = datetime.now(pytz.utc)
+        localTime = datetime.now()  #.astimezone()  # .astimezone returns full tz object from system, https://stackoverflow.com/a/52606421
 
-        return {tz: utcNow.astimezone(pytz.timezone(tz)).strftime('%Y-%m-%d %H:%M:%S') for tz in timezones}
+        times = {tz: utcNow.astimezone(pytz.timezone(tz)).strftime(timeFormat) for tz in timezones}
+        times.update({'local':localTime.strftime(timeFormat)})
+
+        return times
 
 
     # Basic fn. wrapper - but better to put here for self?
@@ -191,9 +202,14 @@ class autoProc():
             # Actions for new files
             k = 'added'
             if fileDiffs[k]:
-                
                 # Execute specific actions for different file types.
                 for fType in fileDiffs[k]:
+
+                    if self.verbose:
+                        now = self.getTimes()
+                        print(f"{now['local']}: Files added: {fileDiffs[k][fType]}")
+
+
                     if k == 'added' and fType == 'h5':
                         # Spawn notebook(s)
                         for item in fileDiffs[k][fType]:
@@ -210,7 +226,8 @@ class autoProc():
 
 
                             if self.verbose:
-                                print(f"Triggered build for {item}")
+                                now = self.getTimes()
+                                print(f"{now['local']}: Triggered build for {item}")
                                 # print(type(item))
 
                             # Optional import, set to False if missing.
@@ -218,7 +235,6 @@ class autoProc():
                                 # Do some slack posting here!
                                 now = self.getTimes()
                                 self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f'Found new datafile {item}, processing... \n({now}))')  #\n\n (Images & URL go here!)')
-
 
 
                     if k == 'added' and fType == 'html':
@@ -230,11 +246,13 @@ class autoProc():
                                 now = self.getTimes()
                                 self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f'Processed {item}. Images & URL go here!)')
 
+            # Actions for removed files
+            k == 'removed'
+            if fileDiffs[k] and self.verbose:
+                now = self.getTimes()
+                print(f"{now['local']}: Files removed: {fileDiffs[k][fType]}")
 
-                    if k == 'removed' and self.verbose:
-                        print(f"Files removed: {fileDiffs[k][fType]}")
-
-
+            # Update master list
             before = after
 
 
