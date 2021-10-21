@@ -107,11 +107,18 @@ def setPathsFile(pathType = 'rel', fileIn = 'settings', fType = 'settings', verb
             # Set abs if not specified
             # MAY NOT BE NECESSARY - Path() resolves relative paths directly, so v.is_dir() will always be true.
             # v.is_relative() can test for this however.
-            if (pathType == 'rel') and (paths[k] != Path('None')):  # Ugh, test for empty again - better way to do this?
-                paths[k] = paths['currDir']/paths[k]
+            # if (pathType == 'rel') and (paths[k] != Path('None')):  # Ugh, test for empty again - better way to do this?
+            #     paths[k] = paths['currDir']/paths[k]
 
             # Test again
             if not paths[k].is_dir(): print(f"***WARNING: path {k}: {paths[k]} not found.")
+
+        #
+        # if v.is_relative() and (paths[k] != Path('None')):  # Ugh, test for empty again - better way to do this?
+        #     paths[k] = paths['currDir']/paths[k]
+        if not(paths[k].is_absolute()) and (paths[k] != Path('None')):  # Ugh, test for empty again - better way to do this?
+#             paths[k] = paths['currDir']/paths[k]
+            paths[k] = paths[k].resolve()  # Use Path().resolve()
 
     if verbose:
         print(f"\n*** Got paths from file {fileIn}.")
