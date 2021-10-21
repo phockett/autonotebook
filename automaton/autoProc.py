@@ -7,15 +7,17 @@ import time
 from datetime import datetime
 import pytz   # From timezone handling
 
+import dotenv
+
 from multiprocessing import Process
 
 from pathlib import Path
 
 # Locl imports - hacky!
 try:
-    from auto_util import setPaths, triggerNotebook   # Works at CLI with this
+    from auto_util import setPathsFile, triggerNotebook   # Works at CLI with this
 except:
-    from .auto_util import setPaths, triggerNotebook   # Need . for general class importing, but this fails at CLI as main?
+    from .auto_util import setPathsFile, triggerNotebook   # Need . for general class importing, but this fails at CLI as main?
 
 # Slack stuff... Quick hack for sister pkg import.
 try:
@@ -45,55 +47,13 @@ class autoProc():
 
     """
 
-    def __init__(self, watchDir = None, pollRate = 5,
-                nbDir = None, nbTemplate = None,
-                outDir = None, htmlDir = None,
-                fileType = ['h5','html'], channel_ID = 'C02HP5X1F2S',
-                verbose = True):
+    # Updated version from file
+    def __init__(self, settingsFile = '.settings'):
+        """Init autoProc class using settings file."""
 
-        # Set paths - repo defaults
-        self.paths = setPaths()
-
-        # Path for notebook templates
-        if nbDir is None:
-            nbDir = self.paths['repoDir']/'nbTemplates'
-
-        self.paths['nbDir'] = Path(nbDir)
-
-        # Watch path
-        if watchDir is None:
-            watchDir = Path(os.getcwd())
-
-        self.paths['watchDir'] = Path(watchDir)
-
-        # Output paths
-        if outDir is None:
-            outDir = watchDir
-
-        self.paths['outDir'] = Path(outDir)
-
-        if htmlDir is None:
-            htmlDir = outDir
-
-        self.paths['htmlDir'] = Path(htmlDir)
-
-
-        # Additional options
-        self.options = {}
-        self.options['pollRate'] = pollRate
-
-        if fileType is None:
-            fileType = ['*']
-
-        if not isinstance(fileType, list):   # Force to list for glob routine
-            fileType = [fileType]
-
-        self.options['fileType'] = fileType
-
-        if nbTemplate is None:
-            self.options['nbTemplate'] = 'autoTestNB.ipynb'
-
-        self.verbose = verbose
+        self.options = dotenv.dotenv_values(dotenv_path = settingsFile)
+        self.verbose = self.options['verbose']
+        self.paths = setPathsFile(pathType = self.options['pathType'], fileIn = settingsFile, fType = 'settings', verbose = self.verbose)
 
         # Check current file list
         self.files = {}
@@ -103,9 +63,77 @@ class autoProc():
         # Slack stuff...
         try:
             self.slack_client_wrapper = slack_client_wrapper()
-            self.channel_ID = channel_ID
+            self.channel_ID = self.options['channel_ID']
         except:
             self.slack_client_wrapper = False
+
+
+
+    # def __init__(self, watchDir = None, pollRate = 5,
+    #             nbDir = None, nbTemplate = None,
+    #             outDir = None, htmlDir = None,
+    #             fileType = ['h5','html'], channel_ID = 'C02HP5X1F2S',
+    #             verbose = True):
+    #
+    #
+
+
+        # Old init
+        # # Set paths - repo defaults
+        # self.paths = setPaths()
+        #
+        # # Path for notebook templates
+        # if nbDir is None:
+        #     nbDir = self.paths['repoDir']/'nbTemplates'
+        #
+        # self.paths['nbDir'] = Path(nbDir)
+        #
+        # # Watch path
+        # if watchDir is None:
+        #     watchDir = Path(os.getcwd())
+        #
+        # self.paths['watchDir'] = Path(watchDir)
+        #
+        # # Output paths
+        # if outDir is None:
+        #     outDir = watchDir
+        #
+        # self.paths['outDir'] = Path(outDir)
+        #
+        # if htmlDir is None:
+        #     htmlDir = outDir
+        #
+        # self.paths['htmlDir'] = Path(htmlDir)
+        #
+        #
+        # # Additional options
+        # self.options = {}
+        # self.options['pollRate'] = pollRate
+        #
+        # if fileType is None:
+        #     fileType = ['*']
+        #
+        # if not isinstance(fileType, list):   # Force to list for glob routine
+        #     fileType = [fileType]
+        #
+        # self.options['fileType'] = fileType
+        #
+        # if nbTemplate is None:
+        #     self.options['nbTemplate'] = 'autoTestNB.ipynb'
+        #
+        # self.verbose = verbose
+        #
+        # # Check current file list
+        # self.files = {}
+        # self.files['init'] = self.getFileList()
+        #
+        #
+        # # Slack stuff...
+        # try:
+        #     self.slack_client_wrapper = slack_client_wrapper()
+        #     self.channel_ID = channel_ID
+        # except:
+        #     self.slack_client_wrapper = False
 
     # def getFileList(self):
     #     """Get file list from dir & return as dict (as per demo pollDir code)."""
