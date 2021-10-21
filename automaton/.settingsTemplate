@@ -15,6 +15,7 @@ htmlDir=
 
 
 #****** Additional options
+# NEEDS WORK - these will all be imported as STRINGS. Ugh.
 nbTemplate=autoTestNB.ipynb
 verbose=1
 pollRate=5

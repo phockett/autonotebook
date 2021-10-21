@@ -28,10 +28,15 @@ def setPaths(verbose = True):
     paths = {}
     paths['currDir'] = Path(os.getcwd())
     paths['repoDir'] = Path(os.path.abspath(inspect.getfile(setPaths))).parent # inspect.getfile(inspect)   # OK - call on a function
-    paths['scpDir'] = Path(os.path.dirname(os.path.realpath(__file__)))  # Get path for current file/script
+
+    try:
+        paths['scpDir'] = Path(os.path.dirname(os.path.realpath(__file__)))  # Get path for current file/script - Doesn't work in a notebook
+    except:
+        paths['scpDir'] = None
 
     if verbose:
-        print(f"Working dir {paths['currDir']} \nrepo dir {paths['repoDir']} \nscript dir {paths['scpDir']}")
+        print(f"\n*** Set paths from context.")
+        [print(k,':\t', v) for k,v in paths.items()]
 
     return paths
 
@@ -77,7 +82,7 @@ def setPathsFile(pathType = 'rel', fileIn = 'settings', fType = 'settings', verb
 
     # Set defaults for missing paths & output to dict
     if not paths['nbDir']:
-        paths['nbDir'] = paths['repoDir']/'nbTemplates'
+        paths['nbDir'] = paths['repoDir'].parent/'nbTemplates'
 
     if not paths['watchDir']:
         paths['watchDir'] = paths['currDir']
@@ -100,7 +105,9 @@ def setPathsFile(pathType = 'rel', fileIn = 'settings', fType = 'settings', verb
                 paths[k] = Path('None')  # Set to None or empty?  Note Path('').is_dir() = True however.
 
             # Set abs if not specified
-            if pathType == 'rel':
+            # MAY NOT BE NECESSARY - Path() resolves relative paths directly, so v.is_dir() will always be true.
+            # v.is_relative() can test for this however.
+            if (pathType == 'rel') and (paths[k] != Path('None')):  # Ugh, test for empty again - better way to do this?
                 paths[k] = paths['currDir']/paths[k]
 
             # Test again
