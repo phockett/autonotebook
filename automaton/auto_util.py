@@ -12,6 +12,8 @@ import subprocess
 import shlex
 import time
 
+import dotenv
+
 from pathlib import Path
 
 #************* Paths
