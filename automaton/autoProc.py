@@ -68,7 +68,7 @@ class autoProc():
                 self.options['fileType'] = [self.options['fileType']]  # Wrap single item to list
 
         # Fix int type, ugh. Must be a neater way to do this for dotenv lib, only pulls to str type?
-        [self.options.update({k:int(self.options[k])}) for k in ['verbose', 'pollRate', 'subdirs','usesub']]
+        [self.options.update({k:int(self.options[k])}) for k in ['verbose', 'pollRate', 'subdirs','outputSub']]
 
         self.verbose = self.options['verbose']
 
