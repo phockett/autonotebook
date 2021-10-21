@@ -33,13 +33,13 @@ def setPaths(verbose = True):
 
     return paths
 
-def setPathsFile(dirType = 'rel', fileIn = 'settings', fType = 'settings', verbose = True):
+def setPathsFile(pathType = 'rel', fileIn = 'settings', fType = 'settings', verbose = True):
     """
     Set paths from settings or path file.
 
     Parameters
     ----------
-    dirType : str, optional, default = 'abs'
+    pathType : str, optional, default = 'abs'
         Set for 'rel' or 'abs' paths.
         If rel, the current working dir is assumed to be the base path.
 
@@ -70,7 +70,7 @@ def setPathsFile(dirType = 'rel', fileIn = 'settings', fType = 'settings', verbo
     if fType == 'settings':
         paths.update({k:v for k,v in dotenv.dotenv_values(dotenv_path = fileIn).items() if k.endswith('Dir')}) # For shared options file
     else:
-        paths.update(dotenv.dotenv_values(dotenv_path = 'automaton_paths'))  # For dedicated file
+        paths.update(dotenv.dotenv_values(dotenv_path = fileIn))  # For dedicated file
 
 
     # Set defaults for missing paths & output to dict
@@ -81,21 +81,24 @@ def setPathsFile(dirType = 'rel', fileIn = 'settings', fType = 'settings', verbo
         paths['watchDir'] = paths['currDir']
 
 #     {paths[k]:paths['watchDir'] for k in paths.keys() if not paths[k]}
-    [paths.update({k:paths['watchDir']}) for k in paths.keys() if not paths[k]]
-    [paths.update({k:Path(paths[k]).expanduser()}) for k in paths.keys() if not isinstance(paths[k],Path)]  # Wrap with Path()
+    [paths.update({k:paths['watchDir']}) for k in paths.keys() if not paths[k]]  # Set missing paths = watchDir
+    [paths.update({k:Path(paths[k]).expanduser()}) for k in paths.keys() if not isinstance(paths[k],Path)]  # Wrap with Path() & expanduser().
 
 
     # Check paths
     for k,v in paths.items():
 
-        if not v.is_dir():
+#         if not v.expanduser().is_dir():
 #             print(f"***WARNING: path {k}: {v} not found.")
-
+        if not v.is_dir():
+            # Check if paths have been passed by reference
             if v.name in paths.keys():
                 paths[k] = paths[v.name]
+            else:
+                paths[k] = Path('None')  # Set to None or empty?  Note Path('').is_dir() = True however.
 
             # Set abs if not specified
-            if dirType == 'rel':
+            if pathType == 'rel':
                 paths[k] = paths['currDir']/paths[k]
 
             # Test again
