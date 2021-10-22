@@ -8,6 +8,7 @@
  - Dir watch for files & pass to notebook automation with `automaton`
     - Dir watch with basic polling routine.
     - Notebook execution with nbconvert + HTML generation.
+    - Settings file for paths and options.
 
 
  ## To do
