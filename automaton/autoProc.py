@@ -2,10 +2,14 @@ import os
 import sys
 import inspect
 import subprocess
+import ast
+import glob
 
 import time
 from datetime import datetime
 import pytz   # From timezone handling
+
+import dotenv
 
 from multiprocessing import Process
 
@@ -13,9 +17,9 @@ from pathlib import Path
 
 # Locl imports - hacky!
 try:
-    from auto_util import setPaths, triggerNotebook   # Works at CLI with this
+    from auto_util import setPathsFile, triggerNotebook   # Works at CLI with this
 except:
-    from .auto_util import setPaths, triggerNotebook   # Need . for general class importing, but this fails at CLI as main?
+    from .auto_util import setPathsFile, triggerNotebook   # Need . for general class importing, but this fails at CLI as main?
 
 # Slack stuff... Quick hack for sister pkg import.
 try:
@@ -23,8 +27,8 @@ try:
     sys.path.append(modDir.as_posix())
     # print(sys.path)
     from analysis_bot.analysis_bot import slack_client_wrapper
-except ImportError as e:
-    print(f"*** Slack routines not available. ImportError: {e}")
+except Exception as e:
+    print(f"*** Slack routines not available. Error: {e}")
 
 
 class autoProc():
@@ -45,48 +49,31 @@ class autoProc():
 
     """
 
-    def __init__(self, watchDir = None, pollRate = 5,
-                nbDir = None, nbTemplate = None,
-                outDir = None, htmlDir = None,
-                fileType = 'h5', channel_ID = 'C02HP5X1F2S',
-                verbose = True):
+    # Updated version from file
+    def __init__(self, settingsFile = '.settings'):
+        """Init autoProc class using settings file."""
 
-        # Set paths - repo defaults
-        self.paths = setPaths()
+        # Get options from file
+        self.options = dotenv.dotenv_values(dotenv_path = settingsFile)
 
-        # Path for notebook templates
-        if nbDir is None:
-            nbDir = self.paths['repoDir']/'nbTemplates'
+        # Check options loaded... dotenv returns empty dict if file not found.
+        if not self.options:
+            print(f"***FAILED to load settings file {settingsFile}.")
 
-        self.paths['nbDir'] = Path(nbDir)
+        # Ensure fileType list is set correctly
+        if isinstance(self.options['fileType'], str):
+            if self.options['fileType'].startswith('['):
+                self.options['fileType'] = ast.literal_eval(self.options['fileType'])  # Convert string list to list type
+            else:
+                self.options['fileType'] = [self.options['fileType']]  # Wrap single item to list
 
-        # Watch path
-        if watchDir is None:
-            watchDir = Path(os.getcwd())
+        # Fix int type, ugh. Must be a neater way to do this for dotenv lib, only pulls to str type?
+        [self.options.update({k:int(self.options[k])}) for k in ['verbose', 'pollRate', 'subdirs','outputSub']]
 
-        self.paths['watchDir'] = Path(watchDir)
+        self.verbose = self.options['verbose']
 
-        # Output paths
-        if outDir is None:
-            outDir = watchDir
-
-        self.paths['outDir'] = Path(outDir)
-
-        if htmlDir is None:
-            htmlDir = outDir
-
-        self.paths['htmlDir'] = Path(htmlDir)
-
-
-        # Additional options
-        self.options = {}
-        self.options['pollRate'] = pollRate
-        self.options['fileType'] = fileType
-
-        if nbTemplate is None:
-            self.options['nbTemplate'] = 'autoTestNB.ipynb'
-
-        self.verbose = verbose
+        # Set paths
+        self.paths = setPathsFile(pathType = self.options['pathType'], fileIn = settingsFile, fType = 'settings', verbose = self.verbose)
 
         # Check current file list
         self.files = {}
@@ -96,27 +83,152 @@ class autoProc():
         # Slack stuff...
         try:
             self.slack_client_wrapper = slack_client_wrapper()
-            self.channel_ID = channel_ID
-        except:
+            self.channel_ID = self.options['channel_ID']
+
+            if self.verbose:
+                print(f"Slack client OK, channel_ID: {self.channel_ID}")
+
+        except Exception as e:
             self.slack_client_wrapper = False
+            print(f"Slack client failed: {e}")
+
+            # if self.verbose:
+            #     print(f"Couldn't load Slack client")
+
+
+
+
+    # def __init__(self, watchDir = None, pollRate = 5,
+    #             nbDir = None, nbTemplate = None,
+    #             outDir = None, htmlDir = None,
+    #             fileType = ['h5','html'], channel_ID = 'C02HP5X1F2S',
+    #             verbose = True):
+    #
+    #
+
+
+        # Old init
+        # # Set paths - repo defaults
+        # self.paths = setPaths()
+        #
+        # # Path for notebook templates
+        # if nbDir is None:
+        #     nbDir = self.paths['repoDir']/'nbTemplates'
+        #
+        # self.paths['nbDir'] = Path(nbDir)
+        #
+        # # Watch path
+        # if watchDir is None:
+        #     watchDir = Path(os.getcwd())
+        #
+        # self.paths['watchDir'] = Path(watchDir)
+        #
+        # # Output paths
+        # if outDir is None:
+        #     outDir = watchDir
+        #
+        # self.paths['outDir'] = Path(outDir)
+        #
+        # if htmlDir is None:
+        #     htmlDir = outDir
+        #
+        # self.paths['htmlDir'] = Path(htmlDir)
+        #
+        #
+        # # Additional options
+        # self.options = {}
+        # self.options['pollRate'] = pollRate
+        #
+        # if fileType is None:
+        #     fileType = ['*']
+        #
+        # if not isinstance(fileType, list):   # Force to list for glob routine
+        #     fileType = [fileType]
+        #
+        # self.options['fileType'] = fileType
+        #
+        # if nbTemplate is None:
+        #     self.options['nbTemplate'] = 'autoTestNB.ipynb'
+        #
+        # self.verbose = verbose
+        #
+        # # Check current file list
+        # self.files = {}
+        # self.files['init'] = self.getFileList()
+        #
+        #
+        # # Slack stuff...
+        # try:
+        #     self.slack_client_wrapper = slack_client_wrapper()
+        #     self.channel_ID = channel_ID
+        # except:
+        #     self.slack_client_wrapper = False
+
+    # def getFileList(self):
+    #     """Get file list from dir & return as dict (as per demo pollDir code)."""
+    #     return dict([(f, None) for f in os.listdir(self.paths['watchDir']) if f.endswith(self.options['fileType'])])
+
+    def compareFileDicts(self, dict1, dict2):
+        """Compare two file dictionaries for differences"""
+
+        fileDiffs = {}
+        fileDiffs['added'] = {}
+        fileDiffs['removed'] = {}
+
+        for fileType in self.options['fileType']:
+
+            removed = set(dict1[fileType]) - set(dict2[fileType])  # Files missing in dict2 (=="removed")
+            added = set(dict2[fileType]) - set(dict1[fileType])  # Files missing in dict1 (=="added")
+
+            for k in fileDiffs.keys():
+                if locals()[k]:
+                    fileDiffs[k][fileType] = locals()[k]
+
+                    if self.verbose:  print(f"{k}: {locals()[k]}")
+
+#             if fileDiffs[fileType]['removed']:
+#                 print(f"Removed: {fileDiffs[fileType]['removed']}")
+
+#             if fileDiffs[fileType]['added']:
+#                 print(f"Added: {fileDiffs[fileType]['added']}")
+
+        return fileDiffs
+
 
     def getFileList(self):
-        """Get file list from dir & return as dict (as per demo pollDir code)."""
-        return dict([(f, None) for f in os.listdir(self.paths['watchDir']) if f.endswith(self.options['fileType'])])
+        """
+        Get file list from dir & return as dict.
+
+        Checks multiple fileTypes and returns as fileDict['fileType'] = fileList
+        Will also check subdirs if self.options['subdirs'] = True (default).
+
+        """
+
+        fileDict = {}
+
+        for fileType in self.options['fileType']:
+            fileDict[fileType] = glob.glob((self.paths['watchDir']/'**'/f'*.{fileType}').as_posix(), recursive = self.options['subdirs'])  # ** and recursive = True for subdirs
+
+        return fileDict
+
 
     def getTimes(self, timezones = ['Asia/Tokyo','Europe/London','US/Eastern','US/Pacific'], timeFormat = '%Y-%m-%d %H:%M:%S'):
         """Get times in various zones."""
 
         utcNow = datetime.now(pytz.utc)
+        localTime = datetime.now()  #.astimezone()  # .astimezone returns full tz object from system, https://stackoverflow.com/a/52606421
 
-        return {tz: utcNow.astimezone(pytz.timezone(tz)).strftime('%Y-%m-%d %H:%M:%S') for tz in timezones}
+        times = {tz: utcNow.astimezone(pytz.timezone(tz)).strftime(timeFormat) for tz in timezones}
+        times.update({'local':localTime.strftime(timeFormat)})
+
+        return times
 
 
     # Basic fn. wrapper - but better to put here for self?
     # def poll(self):
     #     self.pollDir(dir = self.paths['watchDir'], pollRate = self.options['pollRate'], verbose = self.verbose)
 
-    # Adapted polling code
+   # Adapted polling code
     def pollDir(self):
         """
         Basic dir polling.
@@ -136,41 +248,81 @@ class autoProc():
         before = self.getFileList()
 
         while 1:
-            time.sleep (self.options['pollRate'])
+            time.sleep(self.options['pollRate'])
             after = self.getFileList()
-            added = [f for f in after if not f in before]
-            removed = [f for f in before if not f in after]
+        #             added = [f for f in after if not f in before]
+        #             removed = [f for f in before if not f in after]
 
-            if added:
-              if self.verbose:
-                  print("Added: ", ", ".join (added))
+            fileDiffs = self.compareFileDicts(before, after)
 
-              # Spawn trigger per new item
-              for item in added:
-                  # triggerNotebook(item, nbDir = self.paths['nbDir'], nbTemplate = self.options['nbTemplate'])  # Direct notebook build call
+        #             for k in fileDiffs.keys():
+            # Actions for new files
+            k = 'added'
+            if fileDiffs[k]:
+                # Execute specific actions for different file types.
+                for fType in fileDiffs[k]:
 
-                  # Subproc call
-                  # cmd = f"auto_util({item}, nbDir = {self.paths['nbDir']}, nbTemplate = {self.options['nbTemplate']})"
-                  # subprocess.run(cmd)
-
-                  # As python process, https://docs.python.org/3/library/multiprocessing.html
-                  # p = Process(target=triggerNotebook, args=[item], kwargs = {'nbDir': self.paths['nbDir'], 'nbTemplate': self.options['nbTemplate']})
-                  p = Process(target=triggerNotebook, args=[item], kwargs = self.paths)
-                  p.start()
-
-                  if self.verbose:
-                      print(f"Triggered build for {item}")
-                  # print(type(item))
-
-                  # Optional import, set to False if missing.
-                  if self.slack_client_wrapper:
-                      # Do some slack posting here!
-                      now = self.getTimes()
-                      self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f'Found new datafile {item}. ({now})\n\n (Images & URL go here!)')
+                    if self.verbose:
+                        now = self.getTimes()
+                        print(f"{now['local']}: Files added: {fileDiffs[k][fType]}")
 
 
-            if removed and self.verbose: print("Removed: ", ", ".join (removed))
+                    if k == 'added' and fType == 'h5':
+                        # Spawn notebook(s)
+                        for item in fileDiffs[k][fType]:
+                            # triggerNotebook(item, nbDir = self.paths['nbDir'], nbTemplate = self.options['nbTemplate'])  # Direct notebook build call
+
+                            # Subproc call
+                            # cmd = f"auto_util({item}, nbDir = {self.paths['nbDir']}, nbTemplate = {self.options['nbTemplate']})"
+                            # subprocess.run(cmd)
+
+                            # As python process, https://docs.python.org/3/library/multiprocessing.html
+                            # p = Process(target=triggerNotebook, args=[item], kwargs = {'nbDir': self.paths['nbDir'], 'nbTemplate': self.options['nbTemplate']})
+
+                            # If specified, output to relative subdir
+                            # CHECK OLD CODE FOR THIS - want relative subdir only for case when watchDir != outDir?
+                            self.itempaths = self.paths.copy()   # Set copy to reuse master dict.
+                            if self.options['subdirs'] and self.options['outputSub']:
+
+                                self.itempaths['subdir'] = Path(item).parent.relative_to(self.paths['watchDir'])  # Get subdirs for item (relative to base dir)
+                                # self.paths['outDir'] = self.paths['outDir']/subdir   # Build same dir tree for outDir - CAN'T RETURN TO MASTER OR WILL TREE
+                                self.itempaths['outDir'] = self.paths['outDir']/self.itempaths['subdir']
+                                self.itempaths['htmlDir'] = self.paths['htmlDir']/self.itempaths['subdir']
+
+                            p = Process(target=triggerNotebook, args=[item], kwargs = self.itempaths)
+                            p.start()
+
+
+                            if self.verbose:
+                                now = self.getTimes()
+                                print(f"{now['local']}: Triggered build for {item}")
+                                # print(type(item))
+
+                            # Optional import, set to False if missing.
+                            if self.slack_client_wrapper:
+                                # Do some slack posting here!
+                                now = self.getTimes()
+                                self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f'Found new datafile {Path(item).name}, processing... \n({now}))')  #\n\n (Images & URL go here!)')
+
+
+                    if k == 'added' and fType == 'html':
+                        # Upload HTML file(s)
+                        for item in fileDiffs[k][fType]:
+                            # Optional import, set to False if missing.
+                            if self.slack_client_wrapper:
+                                # Do some slack posting here!
+                                now = self.getTimes()
+                                self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f'Processed {Path(item).name}. Images & URL go here!)')
+
+            # Actions for removed files
+            k == 'removed'
+            if fileDiffs[k] and self.verbose:
+                now = self.getTimes()
+                print(f"{now['local']}: Files removed: {fileDiffs[k][fType]}")
+
+            # Update master list
             before = after
+
 
 
 if __name__ == '__main__':

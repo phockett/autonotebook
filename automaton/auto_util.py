@@ -12,24 +12,121 @@ import subprocess
 import shlex
 import time
 
+import dotenv
+
 from pathlib import Path
+
+#************* Paths
 
 # Set paths
 def setPaths(verbose = True):
     """
-    Set paths from current file/context.
+    Get paths from current file/context.
 
     """
 
     paths = {}
     paths['currDir'] = Path(os.getcwd())
     paths['repoDir'] = Path(os.path.abspath(inspect.getfile(setPaths))).parent # inspect.getfile(inspect)   # OK - call on a function
-    paths['scpDir'] = Path(os.path.dirname(os.path.realpath(__file__)))  # Get path for current file/script
+
+    try:
+        paths['scpDir'] = Path(os.path.dirname(os.path.realpath(__file__)))  # Get path for current file/script - Doesn't work in a notebook
+    except:
+        paths['scpDir'] = None
 
     if verbose:
-        print(f"Working dir {paths['currDir']} \nrepo dir {paths['repoDir']} \nscript dir {paths['scpDir']}")
+        print(f"\n*** Set paths from context.")
+        [print(k,':\t', v) for k,v in paths.items()]
 
     return paths
+
+def setPathsFile(pathType = 'rel', fileIn = 'settings', fType = 'settings', verbose = True):
+    """
+    Set paths from settings or path file.
+
+    Parameters
+    ----------
+    pathType : str, optional, default = 'abs'
+        Set for 'rel' or 'abs' paths.
+        If rel, the current working dir is assumed to be the base path.
+
+    fileIn : str or path, optional, default = 'settings'
+        Settings file to read. Assumed to be in the working dir if no path specified.
+
+    fType : str, optional, default = 'settings'
+        If 'settings' use only values *Dir for paths.
+        Otherwise assuem ALL values are paths.
+
+    verbose : bool, optional, default = True
+        Print output
+
+    Returns
+    -------
+    paths dictionary
+
+
+    """
+
+    paths = setPaths()  # Get defaults
+
+    # Read settings file
+#     if dirType == 'rel':
+#         fileInd = Path(fileIn
+#     if not Path(fileIn).is_file():
+
+    if fType == 'settings':
+        paths.update({k:v for k,v in dotenv.dotenv_values(dotenv_path = fileIn).items() if k.endswith('Dir')}) # For shared options file
+    else:
+        paths.update(dotenv.dotenv_values(dotenv_path = fileIn))  # For dedicated file
+
+
+    # Set defaults for missing paths & output to dict
+    if not paths['nbDir']:
+        paths['nbDir'] = paths['repoDir'].parent/'nbTemplates'
+
+    if not paths['watchDir']:
+        paths['watchDir'] = paths['currDir']
+
+#     {paths[k]:paths['watchDir'] for k in paths.keys() if not paths[k]}
+    [paths.update({k:paths['watchDir']}) for k in paths.keys() if not paths[k]]  # Set missing paths = watchDir
+    [paths.update({k:Path(paths[k]).expanduser()}) for k in paths.keys() if not isinstance(paths[k],Path)]  # Wrap with Path() & expanduser().
+
+
+    # Check paths
+    for k,v in paths.items():
+
+#         if not v.expanduser().is_dir():
+#             print(f"***WARNING: path {k}: {v} not found.")
+        if not v.is_dir():
+            # Check if paths have been passed by reference
+            if v.name in paths.keys():
+                paths[k] = paths[v.name]
+            else:
+                paths[k] = Path('None')  # Set to None or empty?  Note Path('').is_dir() = True however.
+
+            # Set abs if not specified
+            # MAY NOT BE NECESSARY - Path() resolves relative paths directly, so v.is_dir() will always be true.
+            # v.is_relative() can test for this however.
+            # if (pathType == 'rel') and (paths[k] != Path('None')):  # Ugh, test for empty again - better way to do this?
+            #     paths[k] = paths['currDir']/paths[k]
+
+            # Test again
+            if not paths[k].is_dir(): print(f"***WARNING: path {k}: {paths[k]} not found.")
+
+        #
+        # if v.is_relative() and (paths[k] != Path('None')):  # Ugh, test for empty again - better way to do this?
+        #     paths[k] = paths['currDir']/paths[k]
+        if not(paths[k].is_absolute()) and (paths[k] != Path('None')):  # Ugh, test for empty again - better way to do this?
+#             paths[k] = paths['currDir']/paths[k]
+            paths[k] = paths[k].resolve()  # Use Path().resolve()
+
+    if verbose:
+        print(f"\n*** Got paths from file {fileIn}.")
+        [print(k,':\t', v) for k,v in paths.items()]
+
+    return paths
+
+#****************** Polling
 
 # Basic dir scan
 def getFileList(scanDir = None, fileType = 'h5', verbose = True):
@@ -105,6 +202,8 @@ def pollDir(dir = None, pollRate = 5, verbose = True):
       if removed and verbose: print("Removed: ", ", ".join (removed))
       before = after
 
+
+#***************** Runner
 
 def triggerNotebook(dataFile, outDir = None, nbOut = None, nbDir = None, nbTemplate = None, htmlDir = None, **kwargs):
     """

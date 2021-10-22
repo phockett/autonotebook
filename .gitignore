@@ -3,6 +3,7 @@ test*
 sync.*
 .ipynb_checkpoints
 *.zip
+.settings
 
 # AUTO IGNORE (GH Python)
 # Byte-compiled / optimized / DLL files

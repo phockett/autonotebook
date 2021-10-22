@@ -1,0 +1,34 @@
+#****** Set paths for notebook automation routines.
+# Blank paths will be set to repo or working dir at run time.
+# Path refs by name are also supported, e.g. outDir=watchDir
+# Home dir ~ also OK.
+
+# Minimal settings - watchDir
+pathType=abs
+watchDir=
+
+# Optional dirs
+nbDir=
+outDir=
+htmlDir=
+
+
+
+#****** Additional options
+# NEEDS WORK - these will all be imported as STRINGS. Ugh.
+# UPDATE: now parased to int for specified types, also ugly.
+nbTemplate=autoTestNB.ipynb
+verbose=1
+pollRate=5
+subdirs=1
+
+# Output results back to subdirs?
+outputSub=1
+
+# FileType(s) - single item or python list are OK.
+fileType=['h5','html']
+
+
+# Slack posting options
+# Note Slack key currently set in analysis_bot/.env file.
+channel_ID=

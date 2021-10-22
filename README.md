@@ -14,6 +14,10 @@
 
 - Better Slack integration from `automaton`
   - Nbconvert figure export, see https://nbconvert.readthedocs.io/en/latest/nbconvert_library.html#Using-different-preprocessors
-  - Host & serve HTML versions (python simple server + Ngrox)
+  - Host & serve HTML versions (python simple server + Ngrok)
 - Daemonize, see https://pypi.org/project/python-daemon/
 - Output & logging.
+- Preproc notebook
+  - Figure output from HTML (as above).
+  - Calibration parameters?
+  - Rerun notebooks with different parameters?
