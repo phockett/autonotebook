@@ -16,6 +16,10 @@ import dotenv
 
 from pathlib import Path
 
+import nbformat
+from nbconvert import HTMLExporter, writers
+from traitlets.config import Config
+
 #************* Paths
 
 # Set paths
@@ -205,15 +209,14 @@ def pollDir(dir = None, pollRate = 5, verbose = True):
 
 #***************** Runner
 
+
 def triggerNotebook(dataFile, outDir = None, nbOut = None, nbDir = None, nbTemplate = None, htmlDir = None, **kwargs):
     """
     Run nbconvert from notebook template with specified data file (passed as env var).
 
     This requires the notebook to include something like `dataFile = os.environ.get('DATAFILE', '')`
 
-    TODO: separately extract figures from HTML, see https://nbconvert.readthedocs.io/en/latest/nbconvert_library.html#Using-different-preprocessors
-    Alternatively, could save figs from notebook at execute.
-
+    Figs are extracted during HTML conversion, see convertHTMLfigs()
     """
 
     # Set and modify env, https://stackoverflow.com/questions/2231227/python-subprocess-popen-with-a-modified-environment
@@ -257,16 +260,61 @@ def triggerNotebook(dataFile, outDir = None, nbOut = None, nbDir = None, nbTempl
                                                                                         # May need to use POPEN, https://stackoverflow.com/questions/39721924/how-to-run-multiple-commands-synchronously-from-one-subprocess-popen-command
 
     # Sequential run seems - default is for .run to wait for completion. Should be OK in general, unless processing in step 1 is very slow.
+    # Note "" for paths to allow for cases with whitespace
     cmd1 = f'jupyter nbconvert --to notebook --execute "{Path(nbDir, nbTemplate).as_posix()}" --output "{Path(outDir, nbOut).as_posix()}" --allow-errors'
-    print(f"Executing notebook with: {cmd1}")
-    # subprocess.run(cmd1, env=currEnv)
-    subprocess.run(shlex.split(cmd1), env=currEnv) # Better form - OK on Linux & Win (without needing shell=True)
+    print(f"\n**** Executing notebook with: {cmd1}")
+    subprocess.run(shlex.split(cmd1), env=currEnv)
 
-    # Generate HTML
-    cmd2 = f'jupyter nbconvert --to HTML "{Path(outDir, nbOut).as_posix()}" --output "{Path(htmlDir, nbOut).as_posix()}" --allow-errors'
-    print(f"Generating HTML with: {cmd2}")
-    # subprocess.run(cmd2, env=currEnv)
-    subprocess.run(shlex.split(cmd2), env=currEnv) # OK
+    # TODO: try/except with useful error for kernel not found case
+
+
+    # Generate HTML - nbconvert CLI
+#     cmd2 = f'jupyter nbconvert --to HTML "{Path(outDir, nbOut).as_posix()}" --output "{Path(htmlDir, nbOut).as_posix()}" --allow-errors'
+#     print(f"Generating HTML with: {cmd2}")
+#     # subprocess.run(cmd2, env=currEnv)
+#     subprocess.run(shlex.split(cmd2), env=currEnv) # OK
+
+    # Generate HTML - nbconvert function inc. figure export.
+    # NOTE nbOut needs extension for file reader, .stem OK elsewhere.
+    HTMLFileOut = Path(htmlDir, nbOut).as_posix()
+    print(f"\n*** Generating HTML {HTMLFileOut}.html")
+    convertHTMLfigs(nbFileIn = Path(outDir, nbOut + '.ipynb').as_posix(), nbHTMLout = HTMLFileOut)
+
+
+def convertHTMLfigs(nbFileIn, nbHTMLout = None):
+    """
+    Convert notebook file to HTML inc. full figure output.
+
+    Method follows nbconvert docs https://nbconvert.readthedocs.io/en/latest/nbconvert_library.html
+
+    """
+
+    if nbHTMLout is None:
+        nbHTMLout = Path(nbFileIn).stem
+
+    figDir = Path(nbHTMLout).parent/'figs'  # Set this for fig export, and pass as build_directory to writer
+                                            # If not set figs will go to cwd
+
+    # Read notebook
+    with open(nbFileIn) as f:
+        nb = nbformat.read(f, as_version=4)  # as_version is required
+
+    # Export with imbedded figs
+    html_exporter = HTMLExporter()
+    html_exporter.template_name = 'classic'
+
+    # Write embedded version
+    wf = writers.FilesWriter(build_directory = figDir.as_posix())
+    wf.write(*html_exporter.from_notebook_node(nb), notebook_name = nbHTMLout)
+
+    # Write separate figures
+    c = Config()
+    c.HTMLExporter.preprocessors = ['nbconvert.preprocessors.ExtractOutputPreprocessor']
+    html_exporter = HTMLExporter(config=c)   # May not be necessary - just use existing obj?
+
+    # Write with figs
+#     wf = writers.FilesWriter()
+    wf.write(*html_exporter.from_notebook_node(nb), notebook_name = nbHTMLout + '_linked')
 
 
 #
