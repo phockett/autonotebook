@@ -29,6 +29,12 @@ outputSub=1
 fileType=['h5','html']
 
 
-# Slack posting options
+#**** Slack posting options
 # Note Slack key currently set in analysis_bot/.env file.
 channel_ID=
+
+#**** Server options
+# Set serve=1 to run server, 0 to skip.
+# If port is blank, will attempt to automatically set.
+serve=1
+port=

@@ -18,8 +18,10 @@ from pathlib import Path
 # Locl imports - hacky!
 try:
     from auto_util import setPathsFile, triggerNotebook   # Works at CLI with this
+    from serveHTML import initNgrok, getPort, serveDir
 except:
     from .auto_util import setPathsFile, triggerNotebook   # Need . for general class importing, but this fails at CLI as main?
+    from .serveHTML import initNgrok, getPort, serveDir
 
 # Slack stuff... Quick hack for sister pkg import.
 try:
@@ -68,7 +70,7 @@ class autoProc():
                 self.options['fileType'] = [self.options['fileType']]  # Wrap single item to list
 
         # Fix int type, ugh. Must be a neater way to do this for dotenv lib, only pulls to str type?
-        [self.options.update({k:int(self.options[k])}) for k in ['verbose', 'pollRate', 'subdirs','outputSub']]
+        [self.options.update({k:int(self.options[k])}) for k in ['verbose', 'pollRate', 'subdirs','outputSub','serve']]
 
         self.verbose = self.options['verbose']
 
@@ -86,7 +88,7 @@ class autoProc():
             self.channel_ID = self.options['channel_ID']
 
             if self.verbose:
-                print(f"Slack client OK, channel_ID: {self.channel_ID}")
+                print(f"\n*** Slack client OK, channel_ID: {self.channel_ID}")
 
         except Exception as e:
             self.slack_client_wrapper = False
@@ -95,7 +97,29 @@ class autoProc():
             # if self.verbose:
             #     print(f"Couldn't load Slack client")
 
+        # Server stuff
+        # Note explicit setting for ports etc here.
+        if self.options['serve']:
 
+            if not self.options['port']:
+                self.options['port'] = getPort().getsockname()[1]
+            else:
+                self.options['port'] = int(self.options['port'])  # Force to int value if read from settings file.
+
+            # Try to init pyngrok, skip if not present
+            try:
+                self.options['public_url'] = initNgrok(port)
+            except:
+                self.options['public_url'] = None
+
+            # Spawn server - process or thread?
+            # See, e.g., https://stackoverflow.com/questions/63928479/unable-to-run-python-http-server-in-background-with-threading
+            # serveDir(port = None, htmlDir = None, public_url=None)
+            if self.verbose:
+                print(f"\n*** Spawning server...")
+
+            p = Process(target=serveDir, kwargs = {'port':self.options['port'], 'htmlDir':self.paths['htmlDir'].as_posix(), 'public_url':self.options['public_url']})
+            p.start()
 
 
     # def __init__(self, watchDir = None, pollRate = 5,
