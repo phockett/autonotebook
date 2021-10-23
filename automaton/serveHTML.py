@@ -14,6 +14,7 @@ from pathlib import Path
 import functools
 import http.server
 import socketserver
+import socket
 
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
@@ -39,7 +40,21 @@ def initNgrok(port):
 
 
 
-def serveDir(port = 6709, htmlDir = None, public_url=None):
+def getPort():
+    """
+    Get a free port
+
+    https://stackoverflow.com/a/442981
+    """
+
+    s = socket.socket()
+    s.bind(("", 0))
+    print(f"Got port {s.getsockname()}")
+
+    return s
+
+
+def serveDir(port = None, htmlDir = None, public_url=None):
     """
     Serve directory with python simple server.
 
@@ -49,8 +64,13 @@ def serveDir(port = 6709, htmlDir = None, public_url=None):
     Note: dir handling, see https://stackoverflow.com/questions/39801718/how-to-run-a-http-server-which-serves-a-specific-path
     """
 
+    # Set port
     port = os.environ.get("PORT", port)
 
+    if port is None:
+        port = getPort().getsockname()[1]
+
+    # Set dir
     if htmlDir is None:
         htmlDir = os.getcwd()
 
