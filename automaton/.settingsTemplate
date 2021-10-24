@@ -28,7 +28,7 @@ nbTemplate=autoTestNB.ipynb
 # Output results back to subdirs?
 outputSub=1
 
-# FileType(s) - single item or python list are OK.
+# FileType(s) to trigger output on - use a list, e.g. ['h5','html']
 fileType=['h5','html']
 
 
@@ -36,6 +36,10 @@ fileType=['h5','html']
 # Note Slack key currently set in analysis_bot/.env file.
 slack=1
 channel_ID=
+
+# Set which figures from notebook to use (by integer index list, e.g. [1,4,5])
+# If blank, use all figures.
+figList=
 
 #**** Server options
 # Set serve=1 to run server, 0 to skip.

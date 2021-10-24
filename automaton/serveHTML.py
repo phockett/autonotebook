@@ -84,6 +84,7 @@ def serveDir(port = None, htmlDir = None, public_url=None, useNgrok=True):
         if public_url is None:
             public_url = initNgrok(port)
 
+    # ************************ TODO: add port here for supplied public_url case - otherwise may be missing.
 #         print("Ngrok URL: \"{}\" -> \"http://127.0.0.1:{}\"".format(public_url, port))
 
 

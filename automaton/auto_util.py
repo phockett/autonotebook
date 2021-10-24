@@ -11,6 +11,8 @@ import inspect
 import subprocess
 import shlex
 import time
+import glob
+import re
 
 import dotenv
 
@@ -359,7 +361,7 @@ def getFigFiles(figPath, refList = None, fileType = 'png', subdirs = True):
 
     """
 
-    figList = glob.glob((figDir/'**'/f'*.{fileType}').as_posix(), recursive = subdirs)  # ** and recursive = True for subdirs
+    figList = glob.glob((figPath/'**'/f'*.{fileType}').as_posix(), recursive = subdirs)  # ** and recursive = True for subdirs
     figList = [Path(item) for item in figList]
 
     # Indexed listing

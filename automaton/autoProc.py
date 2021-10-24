@@ -193,9 +193,11 @@ class autoProc():
             settingsFile = self.settingsFile  # Use this if set
             updateFlag = True
 
-
-
-        self.options = dotenv.dotenv_values(dotenv_path = settingsFile)
+        if updateFlag:
+            options = dotenv.dotenv_values(dotenv_path = settingsFile)
+            self.options.update({k:v for k,v in options.items() if (k not in ['port','public_url']) and (not k.endswith('Dir'))})  # Skip these for update case
+        else:
+            self.options = dotenv.dotenv_values(dotenv_path = settingsFile)
 
         # Check options loaded... dotenv returns empty dict if file not found.
         if not self.options:
@@ -209,15 +211,21 @@ class autoProc():
                     print(f"***Loaded settings file {self.settingsFile}.")
 
         # Ensure fileType list is set correctly
-        if isinstance(self.options['fileType'], str):
-            if self.options['fileType'].startswith('['):
-                self.options['fileType'] = ast.literal_eval(self.options['fileType'])  # Convert string list to list type
-            else:
-                self.options['fileType'] = [self.options['fileType']]  # Wrap single item to list
+        # if isinstance(self.options['fileType'], str):
+        #     if self.options['fileType'].startswith('['):
+        #         self.options['fileType'] = ast.literal_eval(self.options['fileType'])  # Convert string list to list type
+        #     else:
+        #         self.options['fileType'] = [self.options['fileType']]  # Wrap single item to list
+
+        # General check for lists.
+        [self.options.update({k:ast.literal_eval(v)}) for k,v in self.options.items() if isinstance(v, str) and v.startswith('[')]
 
         # Fix int type, ugh. Must be a neater way to do this for dotenv lib, only pulls to str type?
         # [self.options.update({k:int(self.options[k])}) for k in ['verbose', 'pollRate', 'subdirs','outputSub','serve','ngrok','slack']]
         [self.options.update({k:int(v)}) for k,v in self.options.items() if isinstance(v, str) and v.isdigit()]
+
+        if self.options['figList']:
+            self.options['figList'] = [int(v) for v in self.options['figList']]  # Force figList to int, since above will miss it.
 
         self.verbose = self.options['verbose']
 
@@ -340,6 +348,8 @@ class autoProc():
 
                         # Spawn notebook(s)
                         for item in fileDiffs[k][fType]:
+                            currDataFile = Path(item).name  # Set to use later for current dataFile.
+
                             # triggerNotebook(item, nbDir = self.paths['nbDir'], nbTemplate = self.options['nbTemplate'])  # Direct notebook build call
 
                             # Subproc call
@@ -379,6 +389,7 @@ class autoProc():
                                 self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f'Found new datafile {Path(item).name}, processing... \n({now}))')  #\n\n (Images & URL go here!)')
 
 
+
                     if k == 'added' and fType == 'html':
                         # Upload HTML file(s)
                         for item in fileDiffs[k][fType]:
@@ -400,14 +411,20 @@ class autoProc():
                                 if postFlag:
                                     # Do some slack posting here!
 
-                                    self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f'Processed {Path(item).name}. {itemURL}.')
+                                    self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f'Processed {currDataFile}: {itemURL}.')
 
                                 # Case for HTML file with separate figs - just post these
                                 # Not sure whether to run this as separate job, or integrate with above?
                                 # Would just need figDir = Path(nbHTMLout).parent/Path(nbHTMLout).stem as per convertHTMLfigs() code.
                                 else:
-                                    figFiles = getFigFiles(item.parent, refList = self.options['figList'])
-                                    self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f'{Path(item).name} figures...', attachments = figFiles)
+                                    figFiles = getFigFiles(Path(item).parent, refList = self.options['figList'])
+                                    self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f'{currDataFile} figures...',
+                                                                            # attachments = {k:v.as_posix() for k,v in figFiles.items()})
+                                                                            attachments = [v.as_posix() for k,v in figFiles.items()])
+
+                                    if self.verbose:
+                                        print(f"Posting figures {figFiles}")
+
 
 
             # Actions for removed files
