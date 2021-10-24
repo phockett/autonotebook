@@ -314,6 +314,8 @@ def convertHTMLfigs(nbFileIn, nbHTMLout = None):
 
     # Write with figs
 #     wf = writers.FilesWriter()
+    # Push to subdir
+    nbHTMLoutLinked = (figDir/Path(nbHTMLout).stem).as_posix() + '_linked.html'
     wf.write(*html_exporter.from_notebook_node(nb), notebook_name = nbHTMLout + '_linked')
 
 
@@ -321,6 +323,54 @@ def convertHTMLfigs(nbFileIn, nbHTMLout = None):
 # def main():
 #     # getFileList()
 #     pollDir()
+
+#*********** Misc
+
+# Faster int check?
+# See https://stackoverflow.com/a/9859202
+def check_int(s):
+    s = str(s)
+    if s[0] in ('-', '+'):
+        return s[1:].isdigit()
+    return s.isdigit()
+
+
+
+# Parse digits from a line using re
+# https://stackoverflow.com/questions/4289331/how-to-extract-numbers-from-a-string-in-python
+def parseLineDigits(testLine):
+    """
+    Use regular expressions to extract digits from a string.
+    https://stackoverflow.com/questions/4289331/how-to-extract-numbers-from-a-string-in-python
+
+    """
+    return re.findall("[-+]?[.]?[\d]+(?:,\d\d\d)*[\.]?\d*(?:[eE][-+]?\d+)?", testLine)
+
+
+def getFigFiles(figPath, refList = None, fileType = 'png', subdirs = True):
+    """
+    Get list of figures from dir.
+
+    Parse file names for index N, assuming naming convention from nbconvert, "output_N_1.png".
+
+    If refList is None or blank all items are returned.
+
+    TODO: subfig case? Add to key, or as nested dict.
+
+    """
+
+    figList = glob.glob((figDir/'**'/f'*.{fileType}').as_posix(), recursive = subdirs)  # ** and recursive = True for subdirs
+    figList = [Path(item) for item in figList]
+
+    # Indexed listing
+    figN = {int(parseLineDigits(item.name)[0]):item for item in figList}
+
+    if refList:
+        figUploads = {k:v for k,v in figN.items() if k in refList}
+    else:
+        figUploads = figN
+
+    return figUploads
 
 
 # Use main to allow for building notebooks as subproc.

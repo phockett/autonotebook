@@ -17,10 +17,10 @@ from pathlib import Path
 
 # Locl imports - hacky!
 try:
-    from auto_util import setPathsFile, triggerNotebook   # Works at CLI with this
+    from auto_util import setPathsFile, triggerNotebook, getFigFiles   # Works at CLI with this
     from serveHTML import initNgrok, getPort, serveDir
 except:
-    from .auto_util import setPathsFile, triggerNotebook   # Need . for general class importing, but this fails at CLI as main?
+    from .auto_util import setPathsFile, triggerNotebook, getFigFiles   # Need . for general class importing, but this fails at CLI as main?
     from .serveHTML import initNgrok, getPort, serveDir
 
 # Slack stuff... Quick hack for sister pkg import.
@@ -188,8 +188,12 @@ class autoProc():
         """
 
         # Get options from file
+        updateFlag = False
         if settingsFile is None:
             settingsFile = self.settingsFile  # Use this if set
+            updateFlag = True
+
+
 
         self.options = dotenv.dotenv_values(dotenv_path = settingsFile)
 
@@ -199,7 +203,10 @@ class autoProc():
         else:
             self.settingsFile = Path('.settings').expanduser().resolve()
             if self.options['verbose']:
-                print(f"***Loaded settings file {self.settingsFile}.")
+                if updateFlag:
+                    print(f"Updating settings from file...")
+                else:
+                    print(f"***Loaded settings file {self.settingsFile}.")
 
         # Ensure fileType list is set correctly
         if isinstance(self.options['fileType'], str):
@@ -209,12 +216,14 @@ class autoProc():
                 self.options['fileType'] = [self.options['fileType']]  # Wrap single item to list
 
         # Fix int type, ugh. Must be a neater way to do this for dotenv lib, only pulls to str type?
-        [self.options.update({k:int(self.options[k])}) for k in ['verbose', 'pollRate', 'subdirs','outputSub','serve','ngrok','slack']]
+        # [self.options.update({k:int(self.options[k])}) for k in ['verbose', 'pollRate', 'subdirs','outputSub','serve','ngrok','slack']]
+        [self.options.update({k:int(v)}) for k,v in self.options.items() if isinstance(v, str) and v.isdigit()]
 
         self.verbose = self.options['verbose']
 
+
         # Set paths
-        self.paths = setPathsFile(pathType = self.options['pathType'], fileIn = settingsFile, fType = 'settings', verbose = self.verbose)
+        self.paths = setPathsFile(pathType = self.options['pathType'], fileIn = settingsFile, fType = 'settings', verbose = self.verbose if not updateFlag else False)
 
         # Check current file list
         self.files = {}
@@ -373,8 +382,11 @@ class autoProc():
                     if k == 'added' and fType == 'html':
                         # Upload HTML file(s)
                         for item in fileDiffs[k][fType]:
+                            # Skip linked HTML docs (used for figure output only)
+                            postFlag = True if not item.endswith('_linked.html') else False
 
-                            if self.options['serve']:
+                            itemURL = ''
+                            if postFlag and self.options['serve']:
                                 base = self.options['public_url']
                                 itemURL = f"{base}/{Path(item).relative_to(self.paths['htmlDir'])}"
 
@@ -384,9 +396,19 @@ class autoProc():
 
                             # Optional import, set to False if missing.
                             if self.slack_client_wrapper:
-                                # Do some slack posting here!
                                 now = self.getTimes()
-                                self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f'Processed {Path(item).name}. Images & URL go here!)')
+                                if postFlag:
+                                    # Do some slack posting here!
+
+                                    self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f'Processed {Path(item).name}. {itemURL}.')
+
+                                # Case for HTML file with separate figs - just post these
+                                # Not sure whether to run this as separate job, or integrate with above?
+                                # Would just need figDir = Path(nbHTMLout).parent/Path(nbHTMLout).stem as per convertHTMLfigs() code.
+                                else:
+                                    figFiles = getFigFiles(item.parent, refList = self.options['figList'])
+                                    self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f'{Path(item).name} figures...', attachments = figFiles)
+
 
             # Actions for removed files
             k == 'removed'

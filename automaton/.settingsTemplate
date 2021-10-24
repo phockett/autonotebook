@@ -17,10 +17,13 @@ htmlDir=
 #****** Additional options
 # NEEDS WORK - these will all be imported as STRINGS. Ugh.
 # UPDATE: now parased to int for specified types, also ugly.
-nbTemplate=autoTestNB.ipynb
+
 verbose=1
 pollRate=5
 subdirs=1
+
+# NOTE: this setting is checked for each datafile, so will function to change/update template
+nbTemplate=autoTestNB.ipynb
 
 # Output results back to subdirs?
 outputSub=1
