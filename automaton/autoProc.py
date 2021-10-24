@@ -49,6 +49,8 @@ class autoProc():
 
         Test & finish Slack integration. May want to use nbconvert figure export, see https://nbconvert.readthedocs.io/en/latest/nbconvert_library.html#Using-different-preprocessors
 
+        watch dir for changes to settings file & update running processes.
+
     """
 
     # Updated version from file
@@ -59,15 +61,20 @@ class autoProc():
 
 
         # Slack stuff...
+        self.slack_client_wrapper = False
         try:
-            self.slack_client_wrapper = slack_client_wrapper()
-            self.channel_ID = self.options['channel_ID']
+            if self.options['slack']:
+                self.slack_client_wrapper = slack_client_wrapper()
+                self.channel_ID = self.options['channel_ID']
 
-            if self.verbose:
-                print(f"\n*** Slack client OK, channel_ID: {self.channel_ID}")
+                if self.verbose:
+                    print(f"\n*** Slack client OK, channel_ID: {self.channel_ID}")
+
+            else:
+                if self.verbose:
+                    print(f"\n*** Slack integration off.")
 
         except Exception as e:
-            self.slack_client_wrapper = False
             print(f"Slack client failed: {e}")
 
             # if self.verbose:
@@ -76,6 +83,8 @@ class autoProc():
         # Server stuff
         # Note explicit setting for ports etc here.
         if self.options['serve']:
+            if self.verbose:
+                print(f"\n*** Spawning server...")
 
             if not self.options['port']:
                 self.options['port'] = getPort().getsockname()[1]
@@ -83,18 +92,25 @@ class autoProc():
                 self.options['port'] = int(self.options['port'])  # Force to int value if read from settings file.
 
             # Try to init pyngrok, skip if not present
-            try:
+            if not self.options['public_url']:
+                self.options['public_url'] = f"http://127.0.0.1:{self.options['port']}"  # Default to localhost
+            else:
+                self.options['public_url'] = f"{self.options['public_url']}:{self.options['port']}"  # Add port if base supplied
+
+            if self.options['ngrok']:
                 self.options['public_url'] = initNgrok(port)
-            except:
-                self.options['public_url'] = None
+                # try:
+                #     self.options['public_url'] = initNgrok(port)
+                # except:
+                #     pass
+
 
             # Spawn server - process or thread?
             # See, e.g., https://stackoverflow.com/questions/63928479/unable-to-run-python-http-server-in-background-with-threading
             # serveDir(port = None, htmlDir = None, public_url=None)
-            if self.verbose:
-                print(f"\n*** Spawning server...")
 
-            p = Process(target=serveDir, kwargs = {'port':self.options['port'], 'htmlDir':self.paths['htmlDir'].as_posix(), 'public_url':self.options['public_url']})
+            p = Process(target=serveDir, kwargs = {'port':self.options['port'], 'htmlDir':self.paths['htmlDir'].as_posix(),
+                                    'public_url':self.options['public_url'], 'useNgrok':self.options['ngrok']})
             p.start()
 
 
@@ -167,6 +183,8 @@ class autoProc():
     def getOptions(self, settingsFile):
         """
         Get settings from file.
+
+        TODO: watch dir for changes to settings file & update running processes.
         """
 
         # Get options from file
@@ -188,7 +206,7 @@ class autoProc():
                 self.options['fileType'] = [self.options['fileType']]  # Wrap single item to list
 
         # Fix int type, ugh. Must be a neater way to do this for dotenv lib, only pulls to str type?
-        [self.options.update({k:int(self.options[k])}) for k in ['verbose', 'pollRate', 'subdirs','outputSub','serve']]
+        [self.options.update({k:int(self.options[k])}) for k in ['verbose', 'pollRate', 'subdirs','outputSub','serve','ngrok','slack']]
 
         self.verbose = self.options['verbose']
 
@@ -254,7 +272,7 @@ class autoProc():
         localTime = datetime.now()  #.astimezone()  # .astimezone returns full tz object from system, https://stackoverflow.com/a/52606421
 
         times = {tz: utcNow.astimezone(pytz.timezone(tz)).strftime(timeFormat) for tz in timezones}
-        times.update({'local':localTime.strftime(timeFormat)})
+        times.update({'local':localTime.strftime(timeFormat), 'utc':utcNow.strftime(timeFormat)})
 
         return times
 
@@ -323,6 +341,10 @@ class autoProc():
                                 # self.paths['outDir'] = self.paths['outDir']/subdir   # Build same dir tree for outDir - CAN'T RETURN TO MASTER OR WILL TREE
                                 self.itempaths['outDir'] = self.paths['outDir']/self.itempaths['subdir']
                                 self.itempaths['htmlDir'] = self.paths['htmlDir']/self.itempaths['subdir']
+                                self.itempaths['nbTemplate'] = self.options['nbTemplate']
+
+                                # Format output filename
+                                self.itempaths['nbOut'] = Path(item).stem + '_' + Path(self.itempaths['nbTemplate']).stem + '_' + self.getTimes(timeFormat = '%Y-%m-%d_%H-%M-%S')['utc']
 
                             p = Process(target=triggerNotebook, args=[item], kwargs = self.itempaths)
                             p.start()
@@ -343,6 +365,15 @@ class autoProc():
                     if k == 'added' and fType == 'html':
                         # Upload HTML file(s)
                         for item in fileDiffs[k][fType]:
+
+                            if self.options['serve']:
+                                base = self.options['public_url']
+                                itemURL = f"{base}/{Path(item).relative_to(self.paths['htmlDir'])}"
+
+                                if self.verbose:
+                                    print(f"URL: {itemURL}")
+
+
                             # Optional import, set to False if missing.
                             if self.slack_client_wrapper:
                                 # Do some slack posting here!

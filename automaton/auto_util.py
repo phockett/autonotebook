@@ -292,7 +292,7 @@ def convertHTMLfigs(nbFileIn, nbHTMLout = None):
     if nbHTMLout is None:
         nbHTMLout = Path(nbFileIn).stem
 
-    figDir = Path(nbHTMLout).parent/'figs'  # Set this for fig export, and pass as build_directory to writer
+    figDir = Path(nbHTMLout).parent/Path(nbHTMLout).stem   # 'figs'  # Set this for fig export, and pass as build_directory to writer
                                             # If not set figs will go to cwd
 
     # Read notebook

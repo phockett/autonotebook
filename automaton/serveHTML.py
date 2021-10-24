@@ -31,10 +31,15 @@ def initNgrok(port):
     Init Ngrok tunnel.
 
     See https://pyngrok.readthedocs.io/en/latest/integrations.html#python-http-server
-    """
 
-    public_url = ngrok.connect(port).public_url
-    print("ngrok tunnel \"{}\" -> \"http://127.0.0.1:{}\"".format(public_url, port))
+    Note: returns localhost if not set, but may prefer None?
+    """
+    try:
+        public_url = ngrok.connect(port).public_url
+        print("ngrok tunnel \"{}\" -> \"http://127.0.0.1:{}\"".format(public_url, port))
+    except Exception as e:
+        print(f"*** Pyngrok error, no tunnel established.\n {e}")
+        public_url = f"http://127.0.0.1:{port}"  # Default to localhost
 
     return public_url
 
@@ -54,7 +59,7 @@ def getPort():
     return s
 
 
-def serveDir(port = None, htmlDir = None, public_url=None):
+def serveDir(port = None, htmlDir = None, public_url=None, useNgrok=True):
     """
     Serve directory with python simple server.
 
@@ -75,7 +80,7 @@ def serveDir(port = None, htmlDir = None, public_url=None):
         htmlDir = os.getcwd()
 
     # Use pyngork? If pulic_url is set use it, otherwise init new tunnel
-    if pyngrokFlag:
+    if pyngrokFlag and useNgrok:
         if public_url is None:
             public_url = initNgrok(port)
 
