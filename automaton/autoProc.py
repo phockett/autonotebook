@@ -180,7 +180,7 @@ class autoProc():
         # except:
         #     self.slack_client_wrapper = False
 
-    def getOptions(self, settingsFile):
+    def getOptions(self, settingsFile = None):
         """
         Get settings from file.
 
@@ -188,6 +188,9 @@ class autoProc():
         """
 
         # Get options from file
+        if settingsFile is None:
+            settingsFile = self.settingsFile  # Use this if set
+
         self.options = dotenv.dotenv_values(dotenv_path = settingsFile)
 
         # Check options loaded... dotenv returns empty dict if file not found.
@@ -291,6 +294,8 @@ class autoProc():
         NOTE: may want to switch to scandir() for subdir processing?
         E.g. subfolders = [ f.path for f in os.scandir(folder) if f.is_dir() ]
 
+        NOTE: now runs getSettings() on data file appearance, but doesn't monitor file directly.
+
         """
 
         dir = self.paths['watchDir']
@@ -321,6 +326,9 @@ class autoProc():
 
 
                     if k == 'added' and fType == 'h5':
+                        # Check settings are up-to-date
+                        self.getOptions()
+
                         # Spawn notebook(s)
                         for item in fileDiffs[k][fType]:
                             # triggerNotebook(item, nbDir = self.paths['nbDir'], nbTemplate = self.options['nbTemplate'])  # Direct notebook build call
