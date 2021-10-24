@@ -55,31 +55,7 @@ class autoProc():
     def __init__(self, settingsFile = '.settings'):
         """Init autoProc class using settings file."""
 
-        # Get options from file
-        self.options = dotenv.dotenv_values(dotenv_path = settingsFile)
-
-        # Check options loaded... dotenv returns empty dict if file not found.
-        if not self.options:
-            print(f"***FAILED to load settings file {settingsFile}.")
-
-        # Ensure fileType list is set correctly
-        if isinstance(self.options['fileType'], str):
-            if self.options['fileType'].startswith('['):
-                self.options['fileType'] = ast.literal_eval(self.options['fileType'])  # Convert string list to list type
-            else:
-                self.options['fileType'] = [self.options['fileType']]  # Wrap single item to list
-
-        # Fix int type, ugh. Must be a neater way to do this for dotenv lib, only pulls to str type?
-        [self.options.update({k:int(self.options[k])}) for k in ['verbose', 'pollRate', 'subdirs','outputSub','serve']]
-
-        self.verbose = self.options['verbose']
-
-        # Set paths
-        self.paths = setPathsFile(pathType = self.options['pathType'], fileIn = settingsFile, fType = 'settings', verbose = self.verbose)
-
-        # Check current file list
-        self.files = {}
-        self.files['init'] = self.getFileList()
+        self.getOptions(settingsFile)
 
 
         # Slack stuff...
@@ -187,6 +163,41 @@ class autoProc():
         #     self.channel_ID = channel_ID
         # except:
         #     self.slack_client_wrapper = False
+
+    def getOptions(self, settingsFile):
+        """
+        Get settings from file.
+        """
+
+        # Get options from file
+        self.options = dotenv.dotenv_values(dotenv_path = settingsFile)
+
+        # Check options loaded... dotenv returns empty dict if file not found.
+        if not self.options:
+            print(f"***FAILED to load settings file {settingsFile}.")
+        else:
+            self.settingsFile = Path('.settings').expanduser().resolve()
+            if self.options['verbose']:
+                print(f"***Loaded settings file {self.settingsFile}.")
+
+        # Ensure fileType list is set correctly
+        if isinstance(self.options['fileType'], str):
+            if self.options['fileType'].startswith('['):
+                self.options['fileType'] = ast.literal_eval(self.options['fileType'])  # Convert string list to list type
+            else:
+                self.options['fileType'] = [self.options['fileType']]  # Wrap single item to list
+
+        # Fix int type, ugh. Must be a neater way to do this for dotenv lib, only pulls to str type?
+        [self.options.update({k:int(self.options[k])}) for k in ['verbose', 'pollRate', 'subdirs','outputSub','serve']]
+
+        self.verbose = self.options['verbose']
+
+        # Set paths
+        self.paths = setPathsFile(pathType = self.options['pathType'], fileIn = settingsFile, fType = 'settings', verbose = self.verbose)
+
+        # Check current file list
+        self.files = {}
+        self.files['init'] = self.getFileList()
 
     # def getFileList(self):
     #     """Get file list from dir & return as dict (as per demo pollDir code)."""
