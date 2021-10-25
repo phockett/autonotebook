@@ -98,7 +98,7 @@ class autoProc():
                 self.options['public_url'] = f"{self.options['public_url']}:{self.options['port']}"  # Add port if base supplied
 
             if self.options['ngrok']:
-                self.options['public_url'] = initNgrok(port)
+                self.options['public_url'] = initNgrok(self.options['port'])
                 # try:
                 #     self.options['public_url'] = initNgrok(port)
                 # except:
@@ -191,7 +191,11 @@ class autoProc():
         updateFlag = False
         if settingsFile is None:
             settingsFile = self.settingsFile  # Use this if set
-            updateFlag = True
+
+            if settingsFile:
+                updateFlag = True
+            else:
+                settingsFile = '.settings'  # Default case
 
         if updateFlag:
             options = dotenv.dotenv_values(dotenv_path = settingsFile)
@@ -203,7 +207,7 @@ class autoProc():
         if not self.options:
             print(f"***FAILED to load settings file {settingsFile}.")
         else:
-            self.settingsFile = Path('.settings').expanduser().resolve()
+            self.settingsFile = Path(settingsFile).expanduser().resolve()
             if self.options['verbose']:
                 if updateFlag:
                     print(f"Updating settings from file...")
