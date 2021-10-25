@@ -18,7 +18,7 @@ Coming soon: proper installer & Docker version.
 
 ## Usage
 
-Minimally, the whole process can be triggered via `python autonotebook/automaton/autoProc.py <settings-file>`, where <settings-file> is the path to your settings (see [the settings template for more](https://github.com/phockett/autonotebook/blob/main/automaton/.settingsTemplate)).
+Minimally, the whole process can be triggered via `python autonotebook/automaton/autoProc.py <settings-file>`, where `<settings-file>` is the path to your settings (see [the settings template for more](https://github.com/phockett/autonotebook/blob/main/automaton/.settingsTemplate), which can be used as-is for testing).
 
 For a [quick demo, see the demo notebook.](https://github.com/phockett/autonotebook/blob/main/demo/automaton_demo_241021.ipynb), and [settings file](https://github.com/phockett/autonotebook/blob/main/demo/settingsDemo).
 
