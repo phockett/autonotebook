@@ -4,6 +4,7 @@ import inspect
 import subprocess
 import ast
 import glob
+import pprint
 
 import time
 from datetime import datetime
@@ -312,10 +313,9 @@ class autoProc():
 
         Adapted from http://timgolden.me.uk/python/win32_how_do_i/watch_directory_for_changes.html
 
-        NOTE: may want to switch to scandir() for subdir processing?
-        E.g. subfolders = [ f.path for f in os.scandir(folder) if f.is_dir() ]
-
         NOTE: now runs getSettings() on data file appearance, but doesn't monitor file directly.
+
+        NOTE: Slack message posting with simple Markdown only, but can implement blocks. Also posts messages independently, but may want to consolidate all messages for a dataset?
 
         """
 
@@ -390,7 +390,11 @@ class autoProc():
                             if self.slack_client_wrapper:
                                 # Do some slack posting here!
                                 now = self.getTimes()
-                                self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f'Found new datafile {Path(item).name}, processing... \n({now}))')  #\n\n (Images & URL go here!)')
+                                timeStr = pprint.pformat(timestamp).strip('{').strip('}').replace('\n','\t')
+
+                                # self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f'Found new datafile {Path(item).name}, processing... \n({now}))')  #\n\n (Images & URL go here!)')
+                                self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f"*Found new data file: {Path(item).name}*. \n {timeStr} \n Processing... ")
+
 
 
 
@@ -417,12 +421,17 @@ class autoProc():
 
                                     self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f'Processed {currDataFile}: {itemURL}.')
 
+                                    if itemURL:
+                                        self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f":notebook: <{URL}|Processed notebook {currDataFile}>")
+                                    else:
+                                        self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f":notebook: Processed notebook {currDataFile}")
+
                                 # Case for HTML file with separate figs - just post these
                                 # Not sure whether to run this as separate job, or integrate with above?
                                 # Would just need figDir = Path(nbHTMLout).parent/Path(nbHTMLout).stem as per convertHTMLfigs() code.
                                 else:
                                     figFiles = getFigFiles(Path(item).parent, refList = self.options['figList'])
-                                    self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f'{currDataFile} figures...',
+                                    self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f':chart_with_upwards_trend: {currDataFile} figures...',
                                                                             # attachments = {k:v.as_posix() for k,v in figFiles.items()})
                                                                             attachments = [v.as_posix() for k,v in figFiles.items()])
 
