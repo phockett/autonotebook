@@ -419,7 +419,7 @@ class autoProc():
                                 if postFlag:
                                     # Do some slack posting here!
 
-                                    self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f'Processed {currDataFile}: {itemURL}.')
+                                    # self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f'Processed {currDataFile}: {itemURL}.')
 
                                     if itemURL:
                                         self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f":notebook: <{itemURL}|Processed notebook {currDataFile}>")
