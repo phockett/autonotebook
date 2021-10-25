@@ -1,14 +1,48 @@
 # autonotebook
 
- Basic automatic notebook generation from datafiles.
+ Basic automatic notebook generation from datafiles: watch a dir, trigger notebook builds on new data, serve and post the results to Slack.
 
- For a [quick demo, see the demo notebook.](https://github.com/phockett/autonotebook/blob/main/demo/automaton_demo_241021.ipynb)
+## Installation
 
- ## Implemented
+Currently only importable as a local demo package... run `git clone https://github.com/phockett/autonotebook.git` to grab it.
 
- - Slack messaging with `analysis_bot`
+Requires the following non-standard libs (all pip-installable):
 
- - Dir watch for files & pass to notebook automation with `automaton`
+- Notebook execution: nbconvert, nbformat
+- Timezones: pytz
+- Settings files: python-dotenv
+- Slack: slackclient
+
+Coming soon: proper installer & Docker version.
+
+
+## Usage
+
+For a [quick demo, see the demo notebook.](https://github.com/phockett/autonotebook/blob/main/demo/automaton_demo_241021.ipynb)
+
+
+### Templates
+
+For templates, see [the nbTemplates dir](https://github.com/phockett/autonotebook/tree/main/nbTemplates).
+
+In general, only the following lines are required to make a notebook compatible, to grab the datafile passed from the triggering event:
+
+```
+import os
+
+dataFile = os.environ.get('DATAFILE', '')
+```
+
+Which will get the datafile into the template notebook.
+
+Note that for use with [nb_conda_kernels some additional setup may be required for nbconvert](https://github.com/Anaconda-Platform/nb_conda_kernels#use-with-nbconvert-voila-papermill).
+
+
+## Implemented
+
+- Slack messaging with `analysis_bot`
+
+- Dir watch for files & pass to notebook automation with `automaton`
   - Dir watch with basic polling routine.
   - Notebook execution with nbconvert + HTML generation.
   - Settings file for paths and options.  
