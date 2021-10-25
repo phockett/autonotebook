@@ -452,7 +452,13 @@ class autoProc():
 
 
 if __name__ == '__main__':
+    """
+    If main, start watcher process from passed file, or default.
+    """
 
-    testClass = autoProc()
+    if len(sys.argv)>1:
+        autoNote = autoProc(settingsFile=sys.argv[1])
+    else:
+        autoNote = autoProc()
 
-    testClass.pollDir()
+    autoNote.pollDir()
