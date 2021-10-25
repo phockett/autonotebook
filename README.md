@@ -18,14 +18,20 @@ Coming soon: proper installer & Docker version.
 
 ## Usage
 
-For a [quick demo, see the demo notebook.](https://github.com/phockett/autonotebook/blob/main/demo/automaton_demo_241021.ipynb)
+For a [quick demo, see the demo notebook.](https://github.com/phockett/autonotebook/blob/main/demo/automaton_demo_241021.ipynb), and [settings file](https://github.com/phockett/autonotebook/blob/main/demo/settingsDemo).
+
+Currently this demo will:
+
+- Generate a new notebook when a `.h5` file appears, using the currently set `nbTemplate` file. Note this is checked at each trigger event, so can be changed in the settings file while running.
+- Generate URL links if `serve=1`.
+- Push to Slack if `slack=1`.
 
 
 ### Templates
 
 For templates, see [the nbTemplates dir](https://github.com/phockett/autonotebook/tree/main/nbTemplates).
 
-In general, only the following lines are required to make a notebook compatible, to grab the datafile passed from the triggering event:
+In general, only the following lines are required to make a notebook compatible, to grab the datafile path passed from the triggering event:
 
 ```
 import os
@@ -37,6 +43,16 @@ Which will get the datafile into the template notebook.
 
 Note that for use with [nb_conda_kernels some additional setup may be required for nbconvert](https://github.com/Anaconda-Platform/nb_conda_kernels#use-with-nbconvert-voila-papermill).
 
+### Server
+
+If `serve=1` in the settings, the following will be setup:
+
+- Python http.server for serving local dir.
+- [(py)Ngrok for local server access.](https://pyngrok.readthedocs.io/en/latest/integrations.html#python-http-server) (May require setup on first use.)
+
+And generated URLs will be printed to the console and sent to Slack. See [serveHTML.py for details](https://github.com/phockett/autonotebook/blob/main/automaton/serveHTML.py).
+
+For use with an existing server, set `public_url` and `port` in the settings file.
 
 ## Implemented
 
