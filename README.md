@@ -26,6 +26,8 @@ Currently this demo will:
 - Generate URL links if `serve=1`.
 - Push to Slack if `slack=1`.
 
+For Docker, [see /docker](https://github.com/phockett/autonotebook/tree/main/docker).
+
 
 ### Templates
 
