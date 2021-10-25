@@ -1,0 +1,55 @@
+#****** Set paths for notebook automation routines.
+# Docker demo version - adds watchDirHost for mapping container:host. (Alternatively use docker-compose with bind mounts)
+# Blank paths will be set to repo or working dir at run time.
+# Path refs by name are also supported, e.g. outDir=watchDir
+# Home dir ~ also OK.
+
+# Minimal settings - watchDir
+pathType=abs
+watchDir=/data
+watchDirHost=/volume1/docker/autonotebook/data
+
+# Optional dirs
+nbDir=
+outDir=
+htmlDir=
+
+
+
+#****** Additional options
+# NEEDS WORK - these will all be imported as STRINGS. Ugh.
+# UPDATE: now parased to int for specified types, also ugly.
+
+verbose=1
+pollRate=5
+subdirs=1
+
+# NOTE: this setting is checked for each datafile, so will function to change/update template
+nbTemplate=autoTestNBfigs.ipynb
+
+# Output results back to subdirs?
+outputSub=1
+
+# FileType(s) to trigger output on - use a list, e.g. ['h5','html']
+fileType=['h5','html']
+
+
+#**** Slack posting options
+# Note Slack key currently set in analysis_bot/.env file.
+# Note this needs API key and channel. API key can also be set in analysis_bot/.env
+slack=0
+SLACK_TOKEN=
+channel_ID=
+
+# Set which figures from notebook to use (by integer index list, e.g. [1,4,5])
+# If blank, use all figures.
+figList=
+
+#**** Server options
+# Set serve=1 to run server, 0 to skip.
+# URL will default to localhost if not set, or ngrok tunnel
+# If port is blank, will attempt to automatically set.
+serve=1
+ngrok=1
+public_url=
+port=8080

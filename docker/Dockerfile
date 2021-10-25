@@ -9,7 +9,15 @@ FROM jupyter/scipy-notebook
 
 #*** Add ePSproc + dependencies
 # Note some may become/are optional
-RUN pip install nbconvert, nbformat, pytz, python-dotenv, slackclient, pyngrok
+RUN pip install nbconvert nbformat pytz python-dotenv slackclient pyngrok
 
 # Note optional @branch here
-RUN pip install git+git@github.com/phockett/autonotebook.git
+RUN git clone https://github.com/phockett/autonotebook.git
+
+# Copy local files to container.
+COPY settingsDemoDocker .
+
+# Init ngrok - this gives issues with `docker-compose` otherwise (although OK with `docker run`)
+# Edit: seems to be networking/port-mapping issue with docker-compose, not sure why as yet.
+COPY testPyngrok.py .
+RUN python testPyngrok.py

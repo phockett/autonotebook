@@ -1,0 +1,49 @@
+# Basic docker-compose for autonotebook
+# 23/10/21
+#
+# NOTE: this is currently working for processing only, but has network connection issues.
+# For Ngrok, see https://github.com/shkoliar/docker-ngrok/blob/master/Dockerfile
+# For more options, see https://docs.docker.com/compose/reference/
+
+version: '3.7'
+
+services:
+
+  autonotebook:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    image: autonotebook
+    container_name: autonotebook
+    network_mode: none
+    # command: echo
+    command: start.sh python autonotebook/automaton/autoProc.py /config/settingsDemoDocker
+    ports:     # where the port mapping is `host:container`.
+      - 9056:${port}
+      - 53:53
+      # - 9866:80
+    volumes:
+      # Map watchDir
+      - ${watchDirHost}:/data
+      # Map settings dir - assumed to be working dir.
+      - .:/config:rw
+
+# Set persistent volume with default Docker settings.
+# volumes:
+#   jupyter_data:
+
+
+# Fix for OVPN network sharign issue, https://stackoverflow.com/a/56136591
+# NOTE may want to change subnet here!
+# Without this, defulat network creation fails with
+#   Creating network "app_default" with the default driver
+#   ERROR: could not find an available, non-overlapping IPv4 address pool among the defaults to assign to the network
+
+
+# networks:
+#   default:
+#     driver: bridge
+#     ipam:
+#       config:
+#         - subnet: 172.31.0.1/24
