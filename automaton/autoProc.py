@@ -390,7 +390,7 @@ class autoProc():
                             if self.slack_client_wrapper:
                                 # Do some slack posting here!
                                 now = self.getTimes()
-                                timeStr = pprint.pformat(timestamp).strip('{').strip('}').replace('\n','\t')
+                                timeStr = pprint.pformat(now).strip('{').strip('}').replace('\n','\t')
 
                                 # self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f'Found new datafile {Path(item).name}, processing... \n({now}))')  #\n\n (Images & URL go here!)')
                                 self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f"*Found new data file: {Path(item).name}*. \n {timeStr} \n Processing... ")
