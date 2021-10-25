@@ -19,10 +19,14 @@ class slack_client_wrapper():
             self.token = os.environ['SLACK_TOKEN']
         else:
             self.token = token
-            
+
         self.client = slack.WebClient(token=self.token)
 
-    def post_message(self,channel,message,attachments=None,thread_ts=None,log_ts=True,log_attachments=True,log_exceptions=True):
+    def post_message(self,channel,message,attachments=None,thread_ts=None,log_ts=True,log_attachments=True,log_exceptions=True,blocks=None):
+        """
+        PH 23/10/21 - added crude support for blocks, see https://slack.dev/python-slackclient/basic_usage.html
+        Note this will form post body if supplied, and the `message` field will be ignored.
+        """
         try:
 
             # post message or reply with attachments
@@ -38,16 +42,16 @@ class slack_client_wrapper():
                         logf.write(self.uploaded[attachment_idx]['file']['id'] + '\n')
                 if not filestring == '':
                     if thread_ts is not None:
-                        response = self.client.chat_postMessage(channel=channel, text=message + '\n' + filestring, thread_ts = thread_ts)
+                        response = self.client.chat_postMessage(channel=channel, text=message + '\n' + filestring, thread_ts = thread_ts, blocks=blocks)
                     else:
-                        response = self.client.chat_postMessage(channel=channel, text=message + '\n' + filestring)
+                        response = self.client.chat_postMessage(channel=channel, text=message + '\n' + filestring, blocks=blocks)
 
             # post message or reply without attachments
             else:
                 if thread_ts is not None:
-                    response = self.client.chat_postMessage(channel=channel, text=message, thread_ts = thread_ts)
+                    response = self.client.chat_postMessage(channel=channel, text=message, thread_ts = thread_ts, blocks=blocks)
                 else:
-                    response = self.client.chat_postMessage(channel=channel, text=message)
+                    response = self.client.chat_postMessage(channel=channel, text=message, blocks=blocks)
 
             # log timestamp
             ts = response.data['ts']
