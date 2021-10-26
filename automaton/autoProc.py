@@ -65,7 +65,7 @@ class autoProc():
         self.slack_client_wrapper = False
         try:
             if self.options['slack']:
-                self.slack_client_wrapper = slack_client_wrapper()
+                self.slack_client_wrapper = slack_client_wrapper(token = self.options['SLACK_TOKEN'])
                 self.channel_ID = self.options['channel_ID']
 
                 if self.verbose:
