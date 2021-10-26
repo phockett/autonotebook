@@ -33,8 +33,9 @@ fileType=['h5','html']
 
 
 #**** Slack posting options
-# Note Slack key currently set in analysis_bot/.env file.
+# Note Slack key currently set here or in analysis_bot/.env file.
 slack=1
+SLACK_TOKEN=
 channel_ID=
 
 # Set which figures from notebook to use (by integer index list, e.g. [1,4,5])
