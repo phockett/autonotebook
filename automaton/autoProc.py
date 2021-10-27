@@ -391,7 +391,7 @@ class autoProc():
                                 # print(type(item))
 
                             # Optional import, set to False if missing.
-                            if self.slack_client_wrapper:
+                            if self.slack_client_wrapper and self.options['slack']:
                                 # Do some slack posting here!
                                 now = self.getTimes()
                                 timeStr = pprint.pformat(now).strip('{').strip('}').replace('\n','\t')
@@ -418,7 +418,7 @@ class autoProc():
 
 
                             # Optional import, set to False if missing.
-                            if self.slack_client_wrapper:
+                            if self.slack_client_wrapper and self.options['slack']:
                                 now = self.getTimes()
                                 if postFlag:
                                     # Do some slack posting here!
