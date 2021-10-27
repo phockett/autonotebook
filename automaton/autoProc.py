@@ -445,7 +445,7 @@ class autoProc():
 
 
             # Actions for removed files
-            k == 'removed'
+            k = 'removed'
             if fileDiffs[k] and self.verbose:
                 now = self.getTimes()
                 print(f"{now['local']}: Files removed: {fileDiffs[k][fType]}")
