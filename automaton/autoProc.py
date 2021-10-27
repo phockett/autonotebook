@@ -202,7 +202,7 @@ class autoProc():
             optionsOld = self.options.copy()
             options = dotenv.dotenv_values(dotenv_path = settingsFile)
             self.options.update({k:v for k,v in options.items() if (k not in ['port','public_url']) and (not k.endswith('Dir'))})  # Skip these for update case
-            optionDiffs = {k:v for k,v in options.items() if v != optionsOld[k]}  # Log changes
+            # optionDiffs = {k:v for k,v in options.items() if v != optionsOld[k]}  # Log changes - do this later, after type checks etc.
 
         else:
             self.options = dotenv.dotenv_values(dotenv_path = settingsFile)
@@ -215,11 +215,6 @@ class autoProc():
             if self.options['verbose']:
                 if updateFlag:
                     print(f"Updating settings from file...")
-
-                    if optionDiffs:
-                        print(f"\t Updated settings: {optionDiffs}.")
-                    else:
-                        print("\t No changes found.")
 
                 else:
                     print(f"***Loaded settings file {self.settingsFile}.")
@@ -250,6 +245,15 @@ class autoProc():
         # Check current file list
         self.files = {}
         self.files['init'] = self.getFileList()
+
+        # Log changes
+        if updateFlag:
+            optionDiffs = {k:v for k,v in self.options.items() if v != optionsOld[k]}
+
+            if optionDiffs:
+                print(f"\t Updated settings: {optionDiffs}.")
+            else:
+                print("\t No changes found.")
 
     # def getFileList(self):
     #     """Get file list from dir & return as dict (as per demo pollDir code)."""
@@ -444,9 +448,11 @@ class autoProc():
                                 # Would just need figDir = Path(nbHTMLout).parent/Path(nbHTMLout).stem as per convertHTMLfigs() code.
                                 else:
                                     figFiles = getFigFiles(Path(item).parent, refList = self.options['figList'])
-                                    self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f':chart_with_upwards_trend: {currDataFile} figures...',
-                                                                            # attachments = {k:v.as_posix() for k,v in figFiles.items()})
-                                                                            attachments = [v.as_posix() for k,v in figFiles.items()])
+
+                                    if figFiles:
+                                        self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f':chart_with_upwards_trend: {currDataFile} figures...',
+                                                                                # attachments = {k:v.as_posix() for k,v in figFiles.items()})
+                                                                                attachments = [v.as_posix() for k,v in figFiles.items()])
 
                                     if self.verbose:
                                         print(f"Posting figures {figFiles}")
