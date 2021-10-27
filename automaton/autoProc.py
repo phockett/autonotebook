@@ -410,7 +410,8 @@ class autoProc():
                                 timeStr = pprint.pformat(now).strip('{').strip('}').replace('\n','\t')
 
                                 # self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f'Found new datafile {Path(item).name}, processing... \n({now}))')  #\n\n (Images & URL go here!)')
-                                self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f":robot_face: *Found new data file: {Path(item).name}*. \n {timeStr} \n Processing on {os.uname()[1]} with template {Path(self.itempaths['nbTemplate']).stem}... ")
+                                hostTemplateStr = "host `{os.uname()[1]}` with template `{Path(self.itempaths['nbTemplate'])}` at {self.getTimes(timeFormat = '%Y-%m-%d_%H-%M-%S')['utc']} UTC."
+                                self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f":robot_face: *Found new data file: {Path(item).name}*. \n {timeStr} \n Processing on {hostTemplateStr}... ")
 
 
 
@@ -439,9 +440,9 @@ class autoProc():
                                     # self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f'Processed {currDataFile}: {itemURL}.')
 
                                     if itemURL:
-                                        self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f":notebook: <{itemURL}|Processed notebook {currDataFile}> (from {os.uname()[1]} with template {Path(self.itempaths['nbTemplate']).stem})")
+                                        self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f":notebook: <{itemURL}|Processed notebook {currDataFile}> (from {hostTemplateStr})")
                                     else:
-                                        self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f":notebook: Processed notebook {currDataFile} (from {os.uname()[1]} with template {Path(self.itempaths['nbTemplate']).stem})")
+                                        self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f":notebook: Processed notebook {currDataFile} (from {hostTemplateStr})")
 
                                 # Case for HTML file with separate figs - just post these
                                 # Not sure whether to run this as separate job, or integrate with above?
@@ -450,7 +451,7 @@ class autoProc():
                                     figFiles = getFigFiles(Path(item).parent, refList = self.options['figList'])
 
                                     if figFiles:
-                                        self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f":chart_with_upwards_trend: {currDataFile} figures (from {os.uname()[1]} with template {Path(self.itempaths['nbTemplate']).stem})...",
+                                        self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f":chart_with_upwards_trend: {currDataFile} figures (from {hostTemplateStr})...",
                                                                                 # attachments = {k:v.as_posix() for k,v in figFiles.items()})
                                                                                 attachments = [v.as_posix() for k,v in figFiles.items()])
 
