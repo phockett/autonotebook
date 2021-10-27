@@ -4,6 +4,7 @@
 # Home dir ~ also OK.
 
 # Minimal settings - watchDir
+# pathType=abs or rel, for latter case current working dir will be used as the base path.
 pathType=abs
 watchDir=
 
@@ -39,8 +40,9 @@ slack=1
 SLACK_TOKEN=
 channel_ID=
 
-# Set which figures from notebook to use (by integer index list, e.g. [1,4,5])
+# Set which figures from notebook to use (by integer index list corresponding to cell number, e.g. [1,4,5])
 # If blank, use all figures.
+# TO DO: subfigure support, nbconvert output is named output_{cell number}_{figure number}.png, all subfigs will be posted at the moment.
 figList=
 
 #**** Server options

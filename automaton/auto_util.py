@@ -254,7 +254,7 @@ def triggerNotebook(dataFile, outDir = None, nbOut = None, nbDir = None, nbTempl
     # Check dirs & create if missing... FOR AUTONOTEBOOK THIS IS NOW SET IN CALLING FUNC. where paths are defined
     # for checkDir in ['outDir','htmlDir','nbOut']:
     #     Path(checkDir).mkdir(parents=True, exist_ok=True)
-    
+
 
     # nbTemplate = 'subproc_test.py'  # ENV test script
     # cmd = f"python {Path(nbDir, nbTemplate).as_posix()}"
@@ -371,10 +371,12 @@ def getFigFiles(figPath, refList = None, fileType = 'png', subdirs = True):
     figList = [Path(item) for item in figList]
 
     # Indexed listing
-    figN = {int(parseLineDigits(item.name)[0]):item for item in figList}
+    # figN = {int(parseLineDigits(item.name)[0]):item for item in figList}  # Basic
+    figN = {(int(parseLineDigits(item.name)[0]), int(parseLineDigits(item.name)[1])):item for item in figList}  # With subfigs
 
     if refList:
-        figUploads = {k:v for k,v in figN.items() if k in refList}
+        # figUploads = {k:v for k,v in figN.items() if k in refList}   # Basic
+        figUploads = {k:v for k,v in figN.items() if k[0] in refList}   # With subfigs
     else:
         figUploads = figN
 
