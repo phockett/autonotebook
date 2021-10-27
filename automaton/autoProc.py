@@ -410,7 +410,7 @@ class autoProc():
                                 timeStr = pprint.pformat(now).strip('{').strip('}').replace('\n','\t')
 
                                 # self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f'Found new datafile {Path(item).name}, processing... \n({now}))')  #\n\n (Images & URL go here!)')
-                                hostTemplateStr = "host `{os.uname()[1]}` with template `{Path(self.itempaths['nbTemplate'])}` at {self.getTimes(timeFormat = '%Y-%m-%d_%H-%M-%S')['utc']} UTC."
+                                hostTemplateStr = f"host `{os.uname()[1]}` with template `{Path(self.itempaths['nbTemplate'])}` at {self.getTimes(timeFormat = '%Y-%m-%d_%H-%M-%S')['utc']} UTC."
                                 self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f":robot_face: *Found new data file: {Path(item).name}*. \n {timeStr} \n Processing on {hostTemplateStr}... ")
 
 
