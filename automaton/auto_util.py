@@ -364,6 +364,7 @@ def getFigFiles(figPath, refList = None, fileType = 'png', subdirs = True):
     If refList is None or blank all items are returned.
 
     TODO: subfig case? Add to key, or as nested dict.
+    UPDATE: now added as tuple key, but currently use all subfigs.
 
     """
 
@@ -372,11 +373,11 @@ def getFigFiles(figPath, refList = None, fileType = 'png', subdirs = True):
 
     # Indexed listing
     # figN = {int(parseLineDigits(item.name)[0]):item for item in figList}  # Basic
-    figN = {(int(parseLineDigits(item.name)[0]), int(parseLineDigits(item.name)[1])):item for item in figList}  # With subfigs
+    figN = {(int(parseLineDigits(item.name)[0]), int(parseLineDigits(item.name)[1].strip('.'))):item for item in figList}  # With subfigs
 
     if refList:
         # figUploads = {k:v for k,v in figN.items() if k in refList}   # Basic
-        figUploads = {k:v for k,v in figN.items() if k[0] in refList}   # With subfigs
+        figUploads = {k:v for k,v in figN.items() if k[0] in refList}   # With subfigs (include all)
     else:
         figUploads = figN
 
