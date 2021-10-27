@@ -374,12 +374,12 @@ class autoProc():
                                 self.itempaths['htmlDir'] = self.paths['htmlDir']/self.itempaths['subdir']
                                 self.itempaths['nbTemplate'] = self.options['nbTemplate']
 
-                                # Check dirs exist, create if not
-                                for checkDir in ['outDir','htmlDir','nbOut']:
-                                    Path(self.itempaths[checkDir]).mkdir(parents=True, exist_ok=True)
-
                                 # Format output filename
                                 self.itempaths['nbOut'] = Path(item).stem + '_' + Path(self.itempaths['nbTemplate']).stem + '_' + self.getTimes(timeFormat = '%Y-%m-%d_%H-%M-%S')['utc']
+
+                            # Check dirs exist, create if not
+                            for checkDir in ['outDir','htmlDir','nbOut']:
+                                Path(self.itempaths[checkDir]).mkdir(parents=True, exist_ok=True)
 
                             p = Process(target=triggerNotebook, args=[item], kwargs = self.itempaths)
                             p.start()
