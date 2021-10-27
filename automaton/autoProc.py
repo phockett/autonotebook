@@ -451,7 +451,7 @@ class autoProc():
                 print(f"{now['local']}: Files removed: {fileDiffs[k][fType]}")
 
             # Update master list
-            before = after
+            before = after.copy()
 
 
 
