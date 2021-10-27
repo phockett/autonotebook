@@ -73,7 +73,7 @@ def setPathsFile(pathType = 'rel', fileIn = 'settings', fType = 'settings', verb
 
     """
 
-    paths = setPaths()  # Get defaults
+    paths = setPaths(verbose = verbose)  # Get defaults
 
     # Read settings file
 #     if dirType == 'rel':
@@ -249,6 +249,12 @@ def triggerNotebook(dataFile, outDir = None, nbOut = None, nbDir = None, nbTempl
 
     if nbOut is None:
         nbOut = Path(dataFile).stem
+
+
+    # Check dirs & create if missing... FOR AUTONOTEBOOK THIS IS NOW SET IN CALLING FUNC. where paths are defined
+    # for checkDir in ['outDir','htmlDir','nbOut']:
+    #     Path(checkDir).mkdir(parents=True, exist_ok=True)
+    
 
     # nbTemplate = 'subproc_test.py'  # ENV test script
     # cmd = f"python {Path(nbDir, nbTemplate).as_posix()}"
