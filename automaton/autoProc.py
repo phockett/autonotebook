@@ -199,8 +199,11 @@ class autoProc():
                 settingsFile = '.settings'  # Default case
 
         if updateFlag:
+            optionsOld = self.options.copy()
             options = dotenv.dotenv_values(dotenv_path = settingsFile)
             self.options.update({k:v for k,v in options.items() if (k not in ['port','public_url']) and (not k.endswith('Dir'))})  # Skip these for update case
+            optionDiffs = {k:v for k,v in options.items() if v != optionsOld[k]}  # Log changes
+
         else:
             self.options = dotenv.dotenv_values(dotenv_path = settingsFile)
 
@@ -212,6 +215,12 @@ class autoProc():
             if self.options['verbose']:
                 if updateFlag:
                     print(f"Updating settings from file...")
+
+                    if optionDiffs:
+                        print(f"\t Updated settings: {optionDiffs}.")
+                    else:
+                        print("\t No changes found.")
+
                 else:
                     print(f"***Loaded settings file {self.settingsFile}.")
 
