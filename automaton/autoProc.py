@@ -450,7 +450,7 @@ class autoProc():
                                     figFiles = getFigFiles(Path(item).parent, refList = self.options['figList'])
 
                                     if figFiles:
-                                        self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f':chart_with_upwards_trend: {currDataFile} figures (from {os.uname()[1]} with template {Path(self.itempaths['nbTemplate']).stem})...',
+                                        self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f":chart_with_upwards_trend: {currDataFile} figures (from {os.uname()[1]} with template {Path(self.itempaths['nbTemplate']).stem})...",
                                                                                 # attachments = {k:v.as_posix() for k,v in figFiles.items()})
                                                                                 attachments = [v.as_posix() for k,v in figFiles.items()])
 
