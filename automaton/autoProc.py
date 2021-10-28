@@ -181,15 +181,17 @@ class autoProc():
         # except:
         #     self.slack_client_wrapper = False
 
-    def getOptions(self, settingsFile = None):
+    def getOptions(self, settingsFile = None, updateFlag = False):
         """
         Get settings from file.
 
         TODO: watch dir for changes to settings file & update running processes.
+        UPDATE: will update existing settings if called with
+            - settingsFiles=None: update existing settings if present, read default `.settings` file if not.
+            - updateFlag=True: Force update from settingsFile, either existing or new file.
         """
 
         # Get options from file
-        updateFlag = False
         if settingsFile is None:
             settingsFile = self.settingsFile  # Use this if set
 
@@ -458,7 +460,44 @@ class autoProc():
                                     if self.verbose:
                                         print(f"Posting figures {figFiles}")
 
+                    if k == 'added' and fType == 'proc':
+                        # Trigger custom run with .proc file.
+                        mainOpts = self.options.copy()
 
+                        # Spawn notebook(s) - basically as per new datafile case, should consolidate.
+                        for item in fileDiffs[k][fType]:
+                            self.getOptions(settingsFile=item)
+
+                            # If specified, output to relative subdir
+                            # CHECK OLD CODE FOR THIS - want relative subdir only for case when watchDir != outDir?
+                            self.itempaths = self.paths.copy()   # Set copy to reuse master dict.
+                            if self.options['subdirs'] and self.options['outputSub']:
+
+                                self.itempaths['subdir'] = Path(item).parent.relative_to(self.paths['watchDir'])  # Get subdirs for item (relative to base dir)
+                                # self.paths['outDir'] = self.paths['outDir']/subdir   # Build same dir tree for outDir - CAN'T RETURN TO MASTER OR WILL TREE
+                                self.itempaths['outDir'] = self.paths['outDir']/self.itempaths['subdir']
+                                self.itempaths['htmlDir'] = self.paths['htmlDir']/self.itempaths['subdir']
+                                self.itempaths['nbTemplate'] = self.options['nbTemplate']
+
+                                # Format output filename
+                                self.itempaths['nbOut'] = Path(item).stem + '_' + Path(self.itempaths['nbTemplate']).stem + '_' + self.getTimes(timeFormat = '%Y-%m-%d_%H-%M-%S')['utc']
+
+                            # Check dirs exist, create if not
+                            for checkDir in ['outDir','htmlDir']:
+                                Path(self.itempaths[checkDir]).mkdir(parents=True, exist_ok=True)
+
+                            # TODO - set to pass runs=[...] here instead of datafile name, need to test this & set test notebook to confirm
+                            p = Process(target=triggerNotebook, args=[self.options['runs']], kwargs = self.itempaths)
+                            p.start()
+
+
+                            if self.verbose:
+                                now = self.getTimes()
+                                print(f"{now['local']}: Triggered build for {item}")
+                                # print(type(item))
+
+                            # Skip slack stuff for testing...
+                            # But should call here.
 
             # Actions for removed files
             k = 'removed'

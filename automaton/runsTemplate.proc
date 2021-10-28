@@ -1,0 +1,19 @@
+# Example *.proc file, used to trigger specific custom notebook processing on specified run(s) with settings.
+
+# Minimal settings - run(s)
+# Specify runs to process by number. Must be a list format, e.g. [5], [1,5,7] etc.
+runs=
+
+# Specify template to use
+# If blank will use existing template settings.
+nbTemplate=
+
+
+# Optionally, override any other settings from the main settings file.
+# E.g.,
+#
+# Set custom output dir
+# outDir=<custom output dir>
+#
+# Skip slack posting for custom run
+# slack= 0
