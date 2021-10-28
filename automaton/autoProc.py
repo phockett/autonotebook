@@ -407,13 +407,14 @@ class autoProc():
                             if self.slack_client_wrapper and self.options['slack']:
                                 # Do some slack posting here!
                                 now = self.getTimes()
-                                timeStr = pprint.pformat(now).strip('{').strip('}').replace('\n','\t')
+                                timeStr = pprint.pformat(now).strip('{').strip('}')
 
                                 # self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f'Found new datafile {Path(item).name}, processing... \n({now}))')  #\n\n (Images & URL go here!)')
-                                hostTemplateStr = f"host `{os.uname()[1]}` with template `{Path(self.itempaths['nbTemplate'])}` at {self.getTimes(timeFormat = '%Y-%m-%d_%H-%M-%S')['utc']} UTC."
-                                self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f":robot_face: *Found new data file: {Path(item).name}*. \n {timeStr} \n Processing on {hostTemplateStr}... ")
-
-
+                                hostTemplateStr = f"\nhost: `{os.uname()[1]}`\ntemplate: `{Path(self.itempaths['nbTemplate'])}`\ntime: {self.getTimes(timeFormat = '%Y-%m-%d_%H-%M-%S')['utc']} UTC."
+                                ts = self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f":robot_face: *Found new data file: {Path(item).name}*.")
+                                if ts is not None:
+                                    self.slack_client_wrapper.post_message(channel=self.channel_ID, thread_ts = ts, message=f":clock2: Time \n{timeStr}")
+                                    self.slack_client_wrapper.post_message(channel=self.channel_ID, thread_ts = ts, message=f":computer: Processing... {hostTemplateStr}... ")
 
 
                     if k == 'added' and fType == 'html':
@@ -440,9 +441,13 @@ class autoProc():
                                     # self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f'Processed {currDataFile}: {itemURL}.')
 
                                     if itemURL:
-                                        self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f":notebook: <{itemURL}|Processed notebook {currDataFile}> (from {hostTemplateStr})")
+                                        ts = self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f":notebook: *Processed notebook link:* <{itemURL}|*{currDataFile}*>")
+                                        if ts is not None:
+                                            self.slack_client_wrapper.post_message(channel=self.channel_ID, thread_ts = ts, message=f":computer: Processed {hostTemplateStr}")
                                     else:
-                                        self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f":notebook: Processed notebook {currDataFile} (from {hostTemplateStr})")
+                                        ts = self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f":notebook: *Processed notebook {currDataFile}*")
+                                        if ts is not None:
+                                            self.slack_client_wrapper.post_message(channel=self.channel_ID, thread_ts = ts, message=f":computer: Processed {hostTemplateStr}")
 
                                 # Case for HTML file with separate figs - just post these
                                 # Not sure whether to run this as separate job, or integrate with above?
@@ -451,9 +456,11 @@ class autoProc():
                                     figFiles = getFigFiles(Path(item).parent, refList = self.options['figList'])
 
                                     if figFiles:
-                                        self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f":chart_with_upwards_trend: {currDataFile} figures (from {hostTemplateStr})...",
+                                        ts = self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f":chart_with_upwards_trend: *{currDataFile} figures:*",
                                                                                 # attachments = {k:v.as_posix() for k,v in figFiles.items()})
                                                                                 attachments = [v.as_posix() for k,v in figFiles.items()])
+                                        if ts is not None:
+                                            self.slack_client_wrapper.post_message(channel=self.channel_ID, thread_ts = ts, message=f":computer: Processed {hostTemplateStr}")
 
                                     if self.verbose:
                                         print(f"Posting figures {figFiles}")
