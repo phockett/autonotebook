@@ -234,7 +234,7 @@ class autoProc():
         [self.options.update({k:int(v)}) for k,v in self.options.items() if isinstance(v, str) and v.isdigit()]
 
         if self.options['figList']:
-            self.options['figList'] = [int(v) for v in self.options['figList']]  # Force figList to int, since above will miss it.
+            self.options['figList'] = [(int(v[0]), int(v[1])) for v in self.options['figList']]  # Force figList to int, since above will miss it.
 
         self.verbose = self.options['verbose']
 

@@ -377,7 +377,7 @@ def getFigFiles(figPath, refList = None, fileType = 'png', subdirs = True):
 
     if refList:
         # figUploads = {k:v for k,v in figN.items() if k in refList}   # Basic
-        figUploads = {k:v for k,v in figN.items() if k[0] in refList}   # With subfigs (include all)
+        figUploads = {k:v for k,v in figN.items() if k in refList}   # With subfigs
     else:
         figUploads = figN
 
