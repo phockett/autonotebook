@@ -487,7 +487,9 @@ class autoProc():
                                 Path(self.itempaths[checkDir]).mkdir(parents=True, exist_ok=True)
 
                             # TODO - set to pass runs=[...] here instead of datafile name, need to test this & set test notebook to confirm
-                            p = Process(target=triggerNotebook, args=[self.options['runs']], kwargs = self.itempaths)
+                            # Pass all possible kwargs to allow for arb arg passing to runner.
+                            self.itempaths.update(self.options)
+                            p = Process(target=triggerNotebook, args=[item], kwargs = self.itempaths)
                             p.start()
 
 
@@ -498,6 +500,9 @@ class autoProc():
 
                             # Skip slack stuff for testing...
                             # But should call here.
+
+                        # Reset options for main loop.
+                        self.options = mainOpts
 
             # Actions for removed files
             k = 'removed'

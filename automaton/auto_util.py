@@ -223,7 +223,10 @@ def triggerNotebook(dataFile, outDir = None, nbOut = None, nbDir = None, nbTempl
 
     # Set and modify env, https://stackoverflow.com/questions/2231227/python-subprocess-popen-with-a-modified-environment
     currEnv = os.environ.copy()
-    currEnv["DATAFILE"] = dataFile
+    currEnv["DATAFILE"] = dataFile  # Pass single param by name
+
+    # Arb param passing from args/kwargs as locals() + upper case.
+    currEnv.update({k.upper():v for k,v in locals()['kwargs'].items()})
 
     # print(currEnv)
 
