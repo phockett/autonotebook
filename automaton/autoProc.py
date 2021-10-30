@@ -454,11 +454,13 @@ class autoProc():
                                 # Would just need figDir = Path(nbHTMLout).parent/Path(nbHTMLout).stem as per convertHTMLfigs() code.
                                 else:
                                     figFiles = getFigFiles(Path(item).parent/Path(item[:-12]).stem, refList = self.options['figList'])
+                                    sortedKeys = [k for k in self.options['figList'] if k in figFiles.keys()]
 
                                     if figFiles:
                                         ts = self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f":chart_with_upwards_trend: *{currDataFile} figures:*",
                                                                                 # attachments = {k:v.as_posix() for k,v in figFiles.items()})
-                                                                                attachments = [v.as_posix() for k,v in figFiles.items()])
+                                                                                # attachments = [v.as_posix() for k,v in figFiles.items()])
+                                                                                attachments = [figFiles.get(sortedKey).as_posix() for sortedKey in sortedKeys])
                                         if ts is not None:
                                             self.slack_client_wrapper.post_message(channel=self.channel_ID, thread_ts = ts, message=f":computer: Processed {hostTemplateStr}")
 
