@@ -169,7 +169,7 @@ def getFileList(scanDir = None, fileType = 'h5', verbose = True):
         print(*fileList, sep='\n')
 
 
-def pollDir(dir = None, pollRate = 5, verbose = True):
+def pollDir(dir = None, fileType = 'h5', pollRate = 5, verbose = True):
     """
     Basic dir polling.
 
