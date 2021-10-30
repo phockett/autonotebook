@@ -470,10 +470,10 @@ class autoProc():
 
 
             # Actions for removed files
-            k = 'removed'
-            if fileDiffs[k] and self.verbose:
-                now = self.getTimes()
-                print(f"{now['local']}: Files removed: {fileDiffs[k][fType]}")
+            # k = 'removed'
+            # if fileDiffs[k] and self.verbose:
+            #     now = self.getTimes()
+            #     print(f"{now['local']}: Files removed: {fileDiffs[k][fType]}")
 
             # Update master list
             before = after.copy()
