@@ -453,7 +453,7 @@ class autoProc():
                                 # Not sure whether to run this as separate job, or integrate with above?
                                 # Would just need figDir = Path(nbHTMLout).parent/Path(nbHTMLout).stem as per convertHTMLfigs() code.
                                 else:
-                                    figFiles = getFigFiles(Path(item).parent, refList = self.options['figList'])
+                                    figFiles = getFigFiles(Path(item).parent/Path(item[:-12]).stem, refList = self.options['figList'])
 
                                     if figFiles:
                                         ts = self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f":chart_with_upwards_trend: *{currDataFile} figures:*",
