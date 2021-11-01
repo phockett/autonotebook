@@ -181,7 +181,7 @@ class autoProc():
         # except:
         #     self.slack_client_wrapper = False
 
-    def getOptions(self, settingsFile = None, updateFlag = False):
+    def getOptions(self, settingsFile = None, resetFlag = False):
         """
         Get settings from file.
 
@@ -189,18 +189,23 @@ class autoProc():
         UPDATE: will update existing settings if called with
             - settingsFiles=None: update existing settings if present, read default `.settings` file if not.
             - updateFlag=True: Force update from settingsFile, either existing or new file.
+
+        UPDATE2: Will always update existing settings unless resetFlag=True passed.
+
         """
 
         # Get options from file
         if settingsFile is None:
             settingsFile = self.settingsFile  # Use this if set
 
-            if settingsFile:
-                updateFlag = True
-            else:
-                settingsFile = '.settings'  # Default case
+        # Defaults if file set or missing.
+        if settingsFile:
+            updateFlag = True
+        else:
+            updateFlag = False
+            settingsFile = '.settings'  # Default case
 
-        if updateFlag:
+        if updateFlag and not resetFlag:
             optionsOld = self.options.copy()
             options = dotenv.dotenv_values(dotenv_path = settingsFile)
             self.options.update({k:v for k,v in options.items() if (k not in ['port','public_url']) and (not k.endswith('Dir'))})  # Skip these for update case

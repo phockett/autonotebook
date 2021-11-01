@@ -6,7 +6,7 @@ runList=[1,5,7]
 
 # Specify template to use
 # If blank will use existing template settings.
-nbTemplate=
+nbTemplate=autoTestNBmultiRun.ipynb
 
 
 # Optionally, override any other settings from the main settings file.
