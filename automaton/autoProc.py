@@ -199,10 +199,11 @@ class autoProc():
             settingsFile = self.settingsFile  # Use this if set
 
         # Defaults if file set or missing.
+        updateFlag = False
         if settingsFile:
-            updateFlag = True
+            if hasattr(self, 'options'):
+                updateFlag = True
         else:
-            updateFlag = False
             settingsFile = '.settings'  # Default case
 
         if updateFlag and not resetFlag:
