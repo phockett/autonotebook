@@ -226,7 +226,9 @@ def triggerNotebook(dataFile, outDir = None, nbOut = None, nbDir = None, nbTempl
     currEnv["DATAFILE"] = dataFile  # Pass single param by name
 
     # Arb param passing from args/kwargs as locals() + upper case.
-    currEnv.update({k.upper():v for k,v in locals()['kwargs'].items()})
+    # NOTE THIS BREAKS ENV/SUBPROCESS -- UNLESS SET TO STR()
+    # TODO: pass via JSON params file instead of ENV?
+    currEnv.update({k.upper():str(v) for k,v in locals()['kwargs'].items()})
 
     # print(currEnv)
 
