@@ -259,7 +259,9 @@ class autoProc():
 
         # Log changes
         if updateFlag:
-            optionDiffs = {k:v for k,v in self.options.items() if hasattr(optionsOld,k) and v != optionsOld[k]}
+            # Note awkward logic here, should do better - cases (a) in original list but different or (b) not in original list.
+            optionDiffs = {k:v for k,v in self.options.items() if ((k in optionsOld.keys()) and (v != optionsOld[k])) or (k not in optionsOld.keys())}
+
 
             if optionDiffs:
                 print(f"\t Updated settings: {optionDiffs}.")
