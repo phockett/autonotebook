@@ -253,6 +253,8 @@ class autoProc():
         else:
             self.paths = setPathsFile(pathType = self.options['pathType'], fileIn = settingsFile, fType = 'settings', verbose = self.verbose if not updateFlag else False)
 
+        print(self.paths)
+
         # Check current file list
         self.files = {}
         self.files['init'] = self.getFileList()
