@@ -248,7 +248,10 @@ class autoProc():
 
 
         # Set paths
-        self.paths = setPathsFile(pathType = self.options['pathType'], fileIn = settingsFile, fType = 'settings', verbose = self.verbose if not updateFlag else False)
+        if updateFlag and not resetFlag:
+            pass
+        else:
+            self.paths = setPathsFile(pathType = self.options['pathType'], fileIn = settingsFile, fType = 'settings', verbose = self.verbose if not updateFlag else False)
 
         # Check current file list
         self.files = {}
@@ -256,7 +259,7 @@ class autoProc():
 
         # Log changes
         if updateFlag:
-            optionDiffs = {k:v for k,v in self.options.items() if v != optionsOld[k]}
+            optionDiffs = {k:v for k,v in self.options.items() if hasattr(optionsOld,k) and v != optionsOld[k]}
 
             if optionDiffs:
                 print(f"\t Updated settings: {optionDiffs}.")
