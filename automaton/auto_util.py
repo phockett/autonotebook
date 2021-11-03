@@ -243,14 +243,16 @@ def triggerNotebook(dataFile, outDir = None, nbOut = None, nbDir = None, nbTempl
 
     # **** Set and modify env, https://stackoverflow.com/questions/2231227/python-subprocess-popen-with-a-modified-environment
     currEnv = os.environ.copy()
-    currEnv["DATAFILE"] = dataFile  # Pass single param by name
+    # currEnv["DATAFILE"] = dataFile  # Pass single param by name
+    # currEnv["NBOUT"] = nbOut  # Pass single param by name
 
     varsIn = locals().copy()   # Copy here to avoid changes during iteration.
 
     # Arb param passing from args/kwargs as locals() + upper case.
     # NOTE THIS BREAKS ENV/SUBPROCESS -- UNLESS SET TO STR()
     # TODO: pass via JSON params file instead of ENV?
-    currEnv.update({k.upper():str(v) for k,v in varsIn['kwargs'].items()})
+    currEnv.update({k.upper():str(v) for k,v in varsIn.items() if not k == 'kwargs'})
+    currEnv.update({k.upper():str(v) for k,v in varsIn['kwargs'].items()})  # Unpack kwargs
 
     # Write to JSON file as well/instead - less limiting than ENV passing method.
     # May want to limit this to only relevant args...
