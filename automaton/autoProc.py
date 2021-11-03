@@ -209,7 +209,7 @@ class autoProc():
         if updateFlag and not resetFlag:
             optionsOld = self.options.copy()
             options = dotenv.dotenv_values(dotenv_path = settingsFile)
-            self.options.update({k:v for k,v in options.items() if (k not in ['port','public_url']) and (not k.endswith('Dir'))})  # Skip these for update case
+            self.options.update({k:v for k,v in options.items() if (k not in ['port','public_url']) and (not k.endswith('Dir'))})  # Skip these for update case?
             # optionDiffs = {k:v for k,v in options.items() if v != optionsOld[k]}  # Log changes - do this later, after type checks etc.
 
         else:
@@ -247,14 +247,16 @@ class autoProc():
         self.verbose = self.options['verbose']
 
 
-        # Set paths
-        # if updateFlag and not resetFlag:
-        #     pass
-        # else:
-        #     self.paths = setPathsFile(pathType = self.options['pathType'], fileIn = settingsFile, fType = 'settings', verbose = self.verbose if not updateFlag else False)
+        # Set paths - always run? CURRENTLY ONLY WORKS IF SETTINGS FILE CONTAINS ALL PATHS, not for .proc style updates.
+        # Skip these for update case?
+        if updateFlag and not resetFlag:
+            pass
+        else:
+            self.paths = setPathsFile(pathType = self.options['pathType'], fileIn = settingsFile, fType = 'settings', verbose = self.verbose if not updateFlag else False)
 
-        # Set paths - always run?
-        self.paths = setPathsFile(pathType = self.options['pathType'], fileIn = settingsFile, fType = 'settings', verbose = self.verbose if not updateFlag else False)
+        # Set paths - always run? CURRENTLY ONLY WORKS IF SETTINGS FILE CONTAINS ALL PATHS, not for .proc style updates.
+        # Skip these for update case?
+        # self.paths = setPathsFile(pathType = self.options['pathType'], fileIn = settingsFile, fType = 'settings', verbose = self.verbose if not updateFlag else False)
 
         # Check current file list
         self.files = {}
