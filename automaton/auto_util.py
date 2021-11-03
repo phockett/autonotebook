@@ -245,15 +245,33 @@ def triggerNotebook(dataFile, outDir = None, nbOut = None, nbDir = None, nbTempl
     currEnv = os.environ.copy()
     currEnv["DATAFILE"] = dataFile  # Pass single param by name
 
+    varsIn = locals().copy()   # Copy here to avoid changes during iteration.
+
     # Arb param passing from args/kwargs as locals() + upper case.
     # NOTE THIS BREAKS ENV/SUBPROCESS -- UNLESS SET TO STR()
     # TODO: pass via JSON params file instead of ENV?
-    currEnv.update({k.upper():str(v) for k,v in locals()['kwargs'].items()})
+    currEnv.update({k.upper():str(v) for k,v in varsIn['kwargs'].items()})
 
     # Write to JSON file as well/instead - less limiting than ENV passing method.
     # May want to limit this to only relevant args...
+    # Ugh, Path() objects break this, so need to preset (or subclass Path)
+    jsonDict = {}
+    for k,v in varsIn.items():
+        # Fix Paths at base level
+        if isinstance(v,Path):
+            v = v.as_posix()
+
+        # Fix Paths in kwargs subdict
+        if k == 'kwargs':
+            v.update({k2:v2.as_posix() for k2,v2 in v.items() if isinstance(v2,Path)})
+
+        # Set output
+        jsonDict[k]=v
+
+    # jsonOut = {k:v for k,v in locals().items() if not isinstance(v,Path) and k !='kwargs'}
+    # jsonOut.update
     with open(Path(outDir, nbOut).as_posix() + '_config.json','w') as fOut:
-        json.dump(locals(), fOut, indent=4)
+        json.dump(jsonDict, fOut, indent=4)
 
 
     # **** Launch subprocess
