@@ -248,12 +248,13 @@ class autoProc():
 
 
         # Set paths
-        if updateFlag and not resetFlag:
-            pass
-        else:
-            self.paths = setPathsFile(pathType = self.options['pathType'], fileIn = settingsFile, fType = 'settings', verbose = self.verbose if not updateFlag else False)
+        # if updateFlag and not resetFlag:
+        #     pass
+        # else:
+        #     self.paths = setPathsFile(pathType = self.options['pathType'], fileIn = settingsFile, fType = 'settings', verbose = self.verbose if not updateFlag else False)
 
-        print(self.paths)
+        # Set paths - always run?
+        self.paths = setPathsFile(pathType = self.options['pathType'], fileIn = settingsFile, fType = 'settings', verbose = self.verbose if not updateFlag else False)
 
         # Check current file list
         self.files = {}

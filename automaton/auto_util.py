@@ -221,23 +221,7 @@ def triggerNotebook(dataFile, outDir = None, nbOut = None, nbDir = None, nbTempl
     Figs are extracted during HTML conversion, see convertHTMLfigs()
     """
 
-    # Set and modify env, https://stackoverflow.com/questions/2231227/python-subprocess-popen-with-a-modified-environment
-    currEnv = os.environ.copy()
-    currEnv["DATAFILE"] = dataFile  # Pass single param by name
-
-    # Arb param passing from args/kwargs as locals() + upper case.
-    # NOTE THIS BREAKS ENV/SUBPROCESS -- UNLESS SET TO STR()
-    # TODO: pass via JSON params file instead of ENV?
-    currEnv.update({k.upper():str(v) for k,v in locals()['kwargs'].items()})
-
-    # print(currEnv)
-
-    # Launch subprocess
-    # TODO: trigger notebook with nbconvert or jupyter-runner
-    # See ePSman...
-    # subprocess.Popen(TODO, env=currEnv)
-    # cmd = 'python subproc_test.py'  # Quick test - this is OK on Win, but fails on Linux, need full path (best practice in any case!)
-
+    # **** Setup paths
     if nbDir is None:
         nbDir = os.getcwd()
 
@@ -254,6 +238,28 @@ def triggerNotebook(dataFile, outDir = None, nbOut = None, nbDir = None, nbTempl
 
     if nbOut is None:
         nbOut = Path(dataFile).stem
+
+
+    # **** Set and modify env, https://stackoverflow.com/questions/2231227/python-subprocess-popen-with-a-modified-environment
+    currEnv = os.environ.copy()
+    currEnv["DATAFILE"] = dataFile  # Pass single param by name
+
+    # Arb param passing from args/kwargs as locals() + upper case.
+    # NOTE THIS BREAKS ENV/SUBPROCESS -- UNLESS SET TO STR()
+    # TODO: pass via JSON params file instead of ENV?
+    currEnv.update({k.upper():str(v) for k,v in locals()['kwargs'].items()})
+
+    # Write to JSON file as well/instead - less limiting than ENV passing method.
+    # May want to limit this to only relevant args...
+    with open(Path(outDir, nbOut).as_posix() + '_config.json','w') as fOut:
+        json.dump(locals(), fOut, indent=4)
+
+
+    # **** Launch subprocess
+    # TODO: trigger notebook with nbconvert or jupyter-runner
+    # See ePSman...
+    # subprocess.Popen(TODO, env=currEnv)
+    # cmd = 'python subproc_test.py'  # Quick test - this is OK on Win, but fails on Linux, need full path (best practice in any case!)
 
 
     # Check dirs & create if missing... FOR AUTONOTEBOOK THIS IS NOW SET IN CALLING FUNC. where paths are defined
