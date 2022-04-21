@@ -181,27 +181,35 @@ class autoProc():
         # except:
         #     self.slack_client_wrapper = False
 
-    def getOptions(self, settingsFile = None):
+    def getOptions(self, settingsFile = None, resetFlag = False):
         """
         Get settings from file.
 
         TODO: watch dir for changes to settings file & update running processes.
+        UPDATE: will update existing settings if called with
+            - settingsFiles=None: update existing settings if present, read default `.settings` file if not.
+            - updateFlag=True: Force update from settingsFile, either existing or new file.
+
+        UPDATE2: Will always update existing settings unless resetFlag=True passed.
+
         """
 
         # Get options from file
-        updateFlag = False
         if settingsFile is None:
             settingsFile = self.settingsFile  # Use this if set
 
-            if settingsFile:
+        # Defaults if file set or missing.
+        updateFlag = False
+        if settingsFile:
+            if hasattr(self, 'options'):
                 updateFlag = True
-            else:
-                settingsFile = '.settings'  # Default case
+        else:
+            settingsFile = '.settings'  # Default case
 
-        if updateFlag:
+        if updateFlag and not resetFlag:
             optionsOld = self.options.copy()
             options = dotenv.dotenv_values(dotenv_path = settingsFile)
-            self.options.update({k:v for k,v in options.items() if (k not in ['port','public_url']) and (not k.endswith('Dir'))})  # Skip these for update case
+            self.options.update({k:v for k,v in options.items() if (k not in ['port','public_url']) and (not k.endswith('Dir'))})  # Skip these for update case?
             # optionDiffs = {k:v for k,v in options.items() if v != optionsOld[k]}  # Log changes - do this later, after type checks etc.
 
         else:
@@ -239,8 +247,16 @@ class autoProc():
         self.verbose = self.options['verbose']
 
 
-        # Set paths
-        self.paths = setPathsFile(pathType = self.options['pathType'], fileIn = settingsFile, fType = 'settings', verbose = self.verbose if not updateFlag else False)
+        # Set paths - always run? CURRENTLY ONLY WORKS IF SETTINGS FILE CONTAINS ALL PATHS, not for .proc style updates.
+        # Skip these for update case?
+        if updateFlag and not resetFlag:
+            pass
+        else:
+            self.paths = setPathsFile(pathType = self.options['pathType'], fileIn = settingsFile, fType = 'settings', verbose = self.verbose if not updateFlag else False)
+
+        # Set paths - always run? CURRENTLY ONLY WORKS IF SETTINGS FILE CONTAINS ALL PATHS, not for .proc style updates.
+        # Skip these for update case?
+        # self.paths = setPathsFile(pathType = self.options['pathType'], fileIn = settingsFile, fType = 'settings', verbose = self.verbose if not updateFlag else False)
 
         # Check current file list
         self.files = {}
@@ -248,7 +264,9 @@ class autoProc():
 
         # Log changes
         if updateFlag:
-            optionDiffs = {k:v for k,v in self.options.items() if v != optionsOld[k]}
+            # Note awkward logic here, should do better - cases (a) in original list but different or (b) not in original list.
+            optionDiffs = {k:v for k,v in self.options.items() if ((k in optionsOld.keys()) and (v != optionsOld[k])) or (k not in optionsOld.keys())}
+
 
             if optionDiffs:
                 print(f"\t Updated settings: {optionDiffs}.")
@@ -458,7 +476,49 @@ class autoProc():
                                     if self.verbose:
                                         print(f"Posting figures {figFiles}")
 
+                    if k == 'added' and fType == 'proc':
+                        # Trigger custom run with .proc file.
+                        mainOpts = self.options.copy()
 
+                        # Spawn notebook(s) - basically as per new datafile case, should consolidate.
+                        for item in fileDiffs[k][fType]:
+                            self.getOptions(settingsFile=item)
+
+                            # If specified, output to relative subdir
+                            # CHECK OLD CODE FOR THIS - want relative subdir only for case when watchDir != outDir?
+                            self.itempaths = self.paths.copy()   # Set copy to reuse master dict.
+                            if self.options['subdirs'] and self.options['outputSub']:
+
+                                self.itempaths['subdir'] = Path(item).parent.relative_to(self.paths['watchDir'])  # Get subdirs for item (relative to base dir)
+                                # self.paths['outDir'] = self.paths['outDir']/subdir   # Build same dir tree for outDir - CAN'T RETURN TO MASTER OR WILL TREE
+                                self.itempaths['outDir'] = self.paths['outDir']/self.itempaths['subdir']
+                                self.itempaths['htmlDir'] = self.paths['htmlDir']/self.itempaths['subdir']
+                                self.itempaths['nbTemplate'] = self.options['nbTemplate']
+
+                                # Format output filename
+                                self.itempaths['nbOut'] = Path(item).stem + '_' + Path(self.itempaths['nbTemplate']).stem + '_' + self.getTimes(timeFormat = '%Y-%m-%d_%H-%M-%S')['utc']
+
+                            # Check dirs exist, create if not
+                            for checkDir in ['outDir','htmlDir']:
+                                Path(self.itempaths[checkDir]).mkdir(parents=True, exist_ok=True)
+
+                            # TODO - set to pass runs=[...] here instead of datafile name, need to test this & set test notebook to confirm
+                            # Pass all possible kwargs to allow for arb arg passing to runner.
+                            self.itempaths.update(self.options)
+                            p = Process(target=triggerNotebook, args=[item], kwargs = self.itempaths)
+                            p.start()
+
+
+                            if self.verbose:
+                                now = self.getTimes()
+                                print(f"{now['local']}: Triggered build for {item}")
+                                # print(type(item))
+
+                            # Skip slack stuff for testing...
+                            # But should call here.
+
+                        # Reset options for main loop.
+                        self.options = mainOpts
 
             # Actions for removed files
             k = 'removed'
