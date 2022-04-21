@@ -40,7 +40,7 @@ slack=1
 SLACK_TOKEN=
 channel_ID=
 
-# Set which figures from notebook to use (by integer index list corresponding to cell number, e.g. [1,4,5])
+# Set which figures from notebook to use (by integer indices using list of lists corresponding to cell number and output line number, e.g. [[1,0],[4,3],[5,1]])
 # If blank, use all figures.
 # TO DO: subfigure support, nbconvert output is named output_{cell number}_{figure number}.png, all subfigs will be posted at the moment.
 figList=
