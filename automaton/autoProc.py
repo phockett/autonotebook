@@ -242,7 +242,7 @@ class autoProc():
         [self.options.update({k:int(v)}) for k,v in self.options.items() if isinstance(v, str) and v.isdigit()]
 
         if self.options['figList']:
-            self.options['figList'] = [int(v) for v in self.options['figList']]  # Force figList to int, since above will miss it.
+            self.options['figList'] = [(int(v[0]), int(v[1])) for v in self.options['figList']]  # Force figList to int, since above will miss it.
 
         self.verbose = self.options['verbose']
 
@@ -425,13 +425,14 @@ class autoProc():
                             if self.slack_client_wrapper and self.options['slack']:
                                 # Do some slack posting here!
                                 now = self.getTimes()
-                                timeStr = pprint.pformat(now).strip('{').strip('}').replace('\n','\t')
+                                timeStr = pprint.pformat(now).strip('{').strip('}')
 
                                 # self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f'Found new datafile {Path(item).name}, processing... \n({now}))')  #\n\n (Images & URL go here!)')
-                                hostTemplateStr = f"host `{os.uname()[1]}` with template `{Path(self.itempaths['nbTemplate'])}` at {self.getTimes(timeFormat = '%Y-%m-%d_%H-%M-%S')['utc']} UTC."
-                                self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f":robot_face: *Found new data file: {Path(item).name}*. \n {timeStr} \n Processing on {hostTemplateStr}... ")
-
-
+                                hostTemplateStr = f"\nhost: `{os.uname()[1]}`\ntemplate: `{Path(self.itempaths['nbTemplate'])}`\ntime: {self.getTimes(timeFormat = '%Y-%m-%d_%H-%M-%S')['utc']} UTC."
+                                ts = self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f":robot_face: *Found new data file: {Path(item).name}*.")
+                                if ts is not None:
+                                    self.slack_client_wrapper.post_message(channel=self.channel_ID, thread_ts = ts, message=f":clock2: Time \n{timeStr}")
+                                    self.slack_client_wrapper.post_message(channel=self.channel_ID, thread_ts = ts, message=f":computer: Processing... {hostTemplateStr}... ")
 
 
                     if k == 'added' and fType == 'html':
@@ -458,20 +459,28 @@ class autoProc():
                                     # self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f'Processed {currDataFile}: {itemURL}.')
 
                                     if itemURL:
-                                        self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f":notebook: <{itemURL}|Processed notebook {currDataFile}> (from {hostTemplateStr})")
+                                        ts = self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f":notebook: *Processed notebook link:* <{itemURL}|*{currDataFile}*>")
+                                        if ts is not None:
+                                            self.slack_client_wrapper.post_message(channel=self.channel_ID, thread_ts = ts, message=f":computer: Processed {hostTemplateStr}")
                                     else:
-                                        self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f":notebook: Processed notebook {currDataFile} (from {hostTemplateStr})")
+                                        ts = self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f":notebook: *Processed notebook {currDataFile}*")
+                                        if ts is not None:
+                                            self.slack_client_wrapper.post_message(channel=self.channel_ID, thread_ts = ts, message=f":computer: Processed {hostTemplateStr}")
 
                                 # Case for HTML file with separate figs - just post these
                                 # Not sure whether to run this as separate job, or integrate with above?
                                 # Would just need figDir = Path(nbHTMLout).parent/Path(nbHTMLout).stem as per convertHTMLfigs() code.
                                 else:
-                                    figFiles = getFigFiles(Path(item).parent, refList = self.options['figList'])
+                                    figFiles = getFigFiles(Path(item).parent/Path(item[:-12]).stem, refList = self.options['figList'])
+                                    sortedKeys = [k for k in self.options['figList'] if k in figFiles.keys()]
 
                                     if figFiles:
-                                        self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f":chart_with_upwards_trend: {currDataFile} figures (from {hostTemplateStr})...",
+                                        ts = self.slack_client_wrapper.post_message(channel=self.channel_ID, message=f":chart_with_upwards_trend: *{currDataFile} figures:*",
                                                                                 # attachments = {k:v.as_posix() for k,v in figFiles.items()})
-                                                                                attachments = [v.as_posix() for k,v in figFiles.items()])
+                                                                                # attachments = [v.as_posix() for k,v in figFiles.items()])
+                                                                                attachments = [figFiles.get(sortedKey).as_posix() for sortedKey in sortedKeys])
+                                        if ts is not None:
+                                            self.slack_client_wrapper.post_message(channel=self.channel_ID, thread_ts = ts, message=f":computer: Processed {hostTemplateStr}")
 
                                     if self.verbose:
                                         print(f"Posting figures {figFiles}")
@@ -521,10 +530,10 @@ class autoProc():
                         self.options = mainOpts
 
             # Actions for removed files
-            k = 'removed'
-            if fileDiffs[k] and self.verbose:
-                now = self.getTimes()
-                print(f"{now['local']}: Files removed: {fileDiffs[k][fType]}")
+            # k = 'removed'
+            # if fileDiffs[k] and self.verbose:
+            #     now = self.getTimes()
+            #     print(f"{now['local']}: Files removed: {fileDiffs[k][fType]}")
 
             # Update master list
             before = after.copy()
