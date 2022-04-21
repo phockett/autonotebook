@@ -15,6 +15,7 @@ import glob
 import re
 
 import dotenv
+import json
 
 from pathlib import Path
 
@@ -221,18 +222,7 @@ def triggerNotebook(dataFile, outDir = None, nbOut = None, nbDir = None, nbTempl
     Figs are extracted during HTML conversion, see convertHTMLfigs()
     """
 
-    # Set and modify env, https://stackoverflow.com/questions/2231227/python-subprocess-popen-with-a-modified-environment
-    currEnv = os.environ.copy()
-    currEnv["DATAFILE"] = dataFile
-
-    # print(currEnv)
-
-    # Launch subprocess
-    # TODO: trigger notebook with nbconvert or jupyter-runner
-    # See ePSman...
-    # subprocess.Popen(TODO, env=currEnv)
-    # cmd = 'python subproc_test.py'  # Quick test - this is OK on Win, but fails on Linux, need full path (best practice in any case!)
-
+    # **** Setup paths
     if nbDir is None:
         nbDir = os.getcwd()
 
@@ -249,6 +239,48 @@ def triggerNotebook(dataFile, outDir = None, nbOut = None, nbDir = None, nbTempl
 
     if nbOut is None:
         nbOut = Path(dataFile).stem
+
+
+    # **** Set and modify env, https://stackoverflow.com/questions/2231227/python-subprocess-popen-with-a-modified-environment
+    currEnv = os.environ.copy()
+    # currEnv["DATAFILE"] = dataFile  # Pass single param by name
+    # currEnv["NBOUT"] = nbOut  # Pass single param by name
+
+    varsIn = locals().copy()   # Copy here to avoid changes during iteration.
+
+    # Arb param passing from args/kwargs as locals() + upper case.
+    # NOTE THIS BREAKS ENV/SUBPROCESS -- UNLESS SET TO STR()
+    # TODO: pass via JSON params file instead of ENV?
+    currEnv.update({k.upper():str(v) for k,v in varsIn.items() if not k == 'kwargs'})
+    currEnv.update({k.upper():str(v) for k,v in varsIn['kwargs'].items()})  # Unpack kwargs
+
+    # Write to JSON file as well/instead - less limiting than ENV passing method.
+    # May want to limit this to only relevant args...
+    # Ugh, Path() objects break this, so need to preset (or subclass Path)
+    jsonDict = {}
+    for k,v in varsIn.items():
+        # Fix Paths at base level
+        if isinstance(v,Path):
+            v = v.as_posix()
+
+        # Fix Paths in kwargs subdict
+        if k == 'kwargs':
+            v.update({k2:v2.as_posix() for k2,v2 in v.items() if isinstance(v2,Path)})
+
+        # Set output
+        jsonDict[k]=v
+
+    # jsonOut = {k:v for k,v in locals().items() if not isinstance(v,Path) and k !='kwargs'}
+    # jsonOut.update
+    with open(Path(outDir, nbOut).as_posix() + '_config.json','w') as fOut:
+        json.dump(jsonDict, fOut, indent=4)
+
+
+    # **** Launch subprocess
+    # TODO: trigger notebook with nbconvert or jupyter-runner
+    # See ePSman...
+    # subprocess.Popen(TODO, env=currEnv)
+    # cmd = 'python subproc_test.py'  # Quick test - this is OK on Win, but fails on Linux, need full path (best practice in any case!)
 
 
     # Check dirs & create if missing... FOR AUTONOTEBOOK THIS IS NOW SET IN CALLING FUNC. where paths are defined
